@@ -1,0 +1,682 @@
+[
+  {
+    "prefixo": "GOL",
+    "placa": "NVO2044"
+  },
+  {
+    "prefixo": "11800",
+    "placa": "OMR4C73"
+  },
+  {
+    "prefixo": "11900",
+    "placa": "ONA8083"
+  },
+  {
+    "prefixo": "12000",
+    "placa": "OMX2213"
+  },
+  {
+    "prefixo": "12200",
+    "placa": "OMX2193"
+  },
+  {
+    "prefixo": "12400",
+    "placa": "OOE4685"
+  },
+  {
+    "prefixo": "RANGER",
+    "placa": "OGJ7J55"
+  },
+  {
+    "prefixo": "13000",
+    "placa": "ONZ2254"
+  },
+  {
+    "prefixo": "13700",
+    "placa": "ONH3001"
+  },
+  {
+    "prefixo": "14000",
+    "placa": "OMK0001"
+  },
+  {
+    "prefixo": "14010",
+    "placa": "AZB9B04"
+  },
+  {
+    "prefixo": "14200",
+    "placa": "ONI0A01"
+  },
+  {
+    "prefixo": "14300",
+    "placa": "OMO3002"
+  },
+  {
+    "prefixo": "14400",
+    "placa": "ONJ1472"
+  },
+  {
+    "prefixo": "14500",
+    "placa": "ONF6622"
+  },
+  {
+    "prefixo": "14700",
+    "placa": "ONJ1222"
+  },
+  {
+    "prefixo": "14800",
+    "placa": "ONQ6F39"
+  },
+  {
+    "prefixo": "15200",
+    "placa": "OOC4I69"
+  },
+  {
+    "prefixo": "15300",
+    "placa": "OOC4069"
+  },
+  {
+    "prefixo": "15400",
+    "placa": "ONQ6409"
+  },
+  {
+    "prefixo": "15500",
+    "placa": "PQA3683"
+  },
+  {
+    "prefixo": "15600",
+    "placa": "OOC4709"
+  },
+  {
+    "prefixo": "15700",
+    "placa": "OOC4529"
+  },
+  {
+    "prefixo": "15800",
+    "placa": "PQS4686"
+  },
+  {
+    "prefixo": "15900",
+    "placa": "PQS4716"
+  },
+  {
+    "prefixo": "16000",
+    "placa": "PQS4766"
+  },
+  {
+    "prefixo": "16100",
+    "placa": "PQS4G36"
+  },
+  {
+    "prefixo": "16300",
+    "placa": "PQS4H06"
+  },
+  {
+    "prefixo": "16400",
+    "placa": "PQS4H46"
+  },
+  {
+    "prefixo": "16500",
+    "placa": "PQN2617"
+  },
+  {
+    "prefixo": "16600",
+    "placa": "PQN2627"
+  },
+  {
+    "prefixo": "16700",
+    "placa": "PQO8I17"
+  },
+  {
+    "prefixo": "16800",
+    "placa": "PQZ3754"
+  },
+  {
+    "prefixo": "16900",
+    "placa": "PQZ3814"
+  },
+  {
+    "prefixo": "17000",
+    "placa": "PQZ3I84"
+  },
+  {
+    "prefixo": "17100",
+    "placa": "PQZ3J34"
+  },
+  {
+    "prefixo": "17200",
+    "placa": "PQU6035"
+  },
+  {
+    "prefixo": "17300",
+    "placa": "PQZ3I54"
+  },
+  {
+    "prefixo": "17400",
+    "placa": "PQV1596"
+  },
+  {
+    "prefixo": "17500",
+    "placa": "PQV1726"
+  },
+  {
+    "prefixo": "17600",
+    "placa": "PQV1806"
+  },
+  {
+    "prefixo": "17700",
+    "placa": "PQU2E97"
+  },
+  {
+    "prefixo": "18001",
+    "placa": "PRG8A81"
+  },
+  {
+    "prefixo": "18002",
+    "placa": "PRG8051"
+  },
+  {
+    "prefixo": "18003",
+    "placa": "PRG7581"
+  },
+  {
+    "prefixo": "18004",
+    "placa": "PRH6E21"
+  },
+  {
+    "prefixo": "18005",
+    "placa": "PRH7721"
+  },
+  {
+    "prefixo": "18006",
+    "placa": "PRG9781"
+  },
+  {
+    "prefixo": "18007",
+    "placa": "PRG9761"
+  },
+  {
+    "prefixo": "18008",
+    "placa": "PRH9681"
+  },
+  {
+    "prefixo": "18009",
+    "placa": "PRJ7I18"
+  },
+  {
+    "prefixo": "18010",
+    "placa": "PRJ7308"
+  },
+  {
+    "prefixo": "18011",
+    "placa": "PRK1218"
+  },
+  {
+    "prefixo": "18012",
+    "placa": "PRK6608"
+  },
+  {
+    "prefixo": "18013",
+    "placa": "PRJ7828"
+  },
+  {
+    "prefixo": "18014",
+    "placa": "PRK1C58"
+  },
+  {
+    "prefixo": "18015",
+    "placa": "PRK1B78"
+  },
+  {
+    "prefixo": "18016",
+    "placa": "PRK6658"
+  },
+  {
+    "prefixo": "18017",
+    "placa": "PRK1318"
+  },
+  {
+    "prefixo": "18018",
+    "placa": "PRK6H28"
+  },
+  {
+    "prefixo": "18019",
+    "placa": "PRK1278"
+  },
+  {
+    "prefixo": "18020",
+    "placa": "PRK6678"
+  },
+  {
+    "prefixo": "19001",
+    "placa": "QTQ4614"
+  },
+  {
+    "prefixo": "19002",
+    "placa": "QTQ8254"
+  },
+  {
+    "prefixo": "19003",
+    "placa": "QTQ8294"
+  },
+  {
+    "prefixo": "19004",
+    "placa": "QTS2064"
+  },
+  {
+    "prefixo": "19005",
+    "placa": "QTQ4724"
+  },
+  {
+    "prefixo": "19006",
+    "placa": "QTO8637"
+  },
+  {
+    "prefixo": "19007",
+    "placa": "QTP0317"
+  },
+  {
+    "prefixo": "19008",
+    "placa": "QTS0484"
+  },
+  {
+    "prefixo": "19009",
+    "placa": "QTS0594"
+  },
+  {
+    "prefixo": "19010",
+    "placa": "QTO8077"
+  },
+  {
+    "prefixo": "19011",
+    "placa": "QTS1854"
+  },
+  {
+    "prefixo": "19012",
+    "placa": "QTP0277"
+  },
+  {
+    "prefixo": "19013",
+    "placa": "QTR8894"
+  },
+  {
+    "prefixo": "19014",
+    "placa": "QTS1814"
+  },
+  {
+    "prefixo": "19015",
+    "placa": "QTS1804"
+  },
+  {
+    "prefixo": "19016",
+    "placa": "QTS0D94"
+  },
+  {
+    "prefixo": "19017",
+    "placa": "QTS2054"
+  },
+  {
+    "prefixo": "19018",
+    "placa": "QTS0454"
+  },
+  {
+    "prefixo": "19019",
+    "placa": "QTS2044"
+  },
+  {
+    "prefixo": "19020",
+    "placa": "QTR7967"
+  },
+  {
+    "prefixo": "19021",
+    "placa": "QTR5657"
+  },
+  {
+    "prefixo": "19022",
+    "placa": "QTN6D88"
+  },
+  {
+    "prefixo": "19023",
+    "placa": "QTP1I89"
+  },
+  {
+    "prefixo": "19024",
+    "placa": "QTP1769"
+  },
+  {
+    "prefixo": "19025",
+    "placa": "QTP1I59"
+  },
+  {
+    "prefixo": "19026",
+    "placa": "QTQ2G59"
+  },
+  {
+    "prefixo": "19027",
+    "placa": "RBK8938"
+  },
+  {
+    "prefixo": "19028",
+    "placa": "RBK8978"
+  },
+  {
+    "prefixo": "19029",
+    "placa": "RBN5328"
+  },
+  {
+    "prefixo": "19030",
+    "placa": "RBN3698"
+  },
+  {
+    "prefixo": "20001",
+    "placa": "ONX4J84"
+  },
+  {
+    "prefixo": "20002",
+    "placa": "ONZ2294"
+  },
+  {
+    "prefixo": "20003",
+    "placa": "OMK1C21"
+  },
+  {
+    "prefixo": "20004",
+    "placa": "ONO2A12"
+  },
+  {
+    "prefixo": "20005",
+    "placa": "OND1J74"
+  },
+  {
+    "prefixo": "20006",
+    "placa": "ONI1C51"
+  },
+  {
+    "prefixo": "20007",
+    "placa": "RBV8A97"
+  },
+  {
+    "prefixo": "20008",
+    "placa": "RBY4C67"
+  },
+  {
+    "prefixo": "20009",
+    "placa": "RBV8B67"
+  },
+  {
+    "prefixo": "20010",
+    "placa": "RBU3F27"
+  },
+  {
+    "prefixo": "20011",
+    "placa": "RBU3F47"
+  },
+  {
+    "prefixo": "20012",
+    "placa": "RBU3B77"
+  },
+  {
+    "prefixo": "20013",
+    "placa": "RBV3I37"
+  },
+  {
+    "prefixo": "20014",
+    "placa": "RBV3F77"
+  },
+  {
+    "prefixo": "20015",
+    "placa": "RBV3I77"
+  },
+  {
+    "prefixo": "20016",
+    "placa": "RBV3H87"
+  },
+  {
+    "prefixo": "20017",
+    "placa": "RBV3G47"
+  },
+  {
+    "prefixo": "20018",
+    "placa": "RBV8B87"
+  },
+  {
+    "prefixo": "20019",
+    "placa": "RBW2G07"
+  },
+  {
+    "prefixo": "20020",
+    "placa": "RBW2E07"
+  },
+  {
+    "prefixo": "20021",
+    "placa": "RBW2D97"
+  },
+  {
+    "prefixo": "20022",
+    "placa": "RBW2D77"
+  },
+  {
+    "prefixo": "221101",
+    "placa": "OGT8A57"
+  },
+  {
+    "prefixo": "221301",
+    "placa": "OMW9F53"
+  },
+  {
+    "prefixo": "2343",
+    "placa": "SPE0F17"
+  },
+  {
+    "prefixo": "24001",
+    "placa": "SD02J77"
+  },
+  {
+    "prefixo": "24002",
+    "placa": "SDO0E97"
+  },
+  {
+    "prefixo": "24003",
+    "placa": "SDK9H07"
+  },
+  {
+    "prefixo": "24004",
+    "placa": "SDJ8I27"
+  },
+  {
+    "prefixo": "24005",
+    "placa": "SDN7G87"
+  },
+  {
+    "prefixo": "24006",
+    "placa": "SDL0B08"
+  },
+  {
+    "prefixo": "24007",
+    "placa": "SDN1J31"
+  },
+  {
+    "prefixo": "24008",
+    "placa": "SDI1J61"
+  },
+  {
+    "prefixo": "24009",
+    "placa": "SDK1D31"
+  },
+  {
+    "prefixo": "24010",
+    "placa": "SDI3B11"
+  },
+  {
+    "prefixo": "24011",
+    "placa": "SDM1A01"
+  },
+  {
+    "prefixo": "24012",
+    "placa": "SDN8I83"
+  },
+  {
+    "prefixo": "24013",
+    "placa": "SDM5F33"
+  },
+  {
+    "prefixo": "24014",
+    "placa": "SDO6A03"
+  },
+  {
+    "prefixo": "24015",
+    "placa": "TGI3I15"
+  },
+  {
+    "prefixo": "24016",
+    "placa": "TFS5B85"
+  },
+  {
+    "prefixo": "24017",
+    "placa": "TFO8F35"
+  },
+  {
+    "prefixo": "24018",
+    "placa": "TFZ6H15"
+  },
+  {
+    "prefixo": "24019",
+    "placa": "SCS9G39"
+  },
+  {
+    "prefixo": "24020",
+    "placa": "SCU3F69"
+  },
+  {
+    "prefixo": "24021",
+    "placa": "24021"
+  },
+  {
+    "prefixo": "24022",
+    "placa": "SDH1J19"
+  },
+  {
+    "prefixo": "24023",
+    "placa": "24023"
+  },
+  {
+    "prefixo": "241601",
+    "placa": "PPQ3E66"
+  },
+  {
+    "prefixo": "241801",
+    "placa": "QOR4938"
+  },
+  {
+    "prefixo": "2620",
+    "placa": "SPC9D25"
+  },
+  {
+    "prefixo": "2630",
+    "placa": "SPC9D35"
+  },
+  {
+    "prefixo": "28 - S10 GYN",
+    "placa": "PQX3D14"
+  },
+  {
+    "prefixo": "31 - STRADA CBA",
+    "placa": "NKZ8B87"
+  },
+  {
+    "prefixo": "AG 2342",
+    "placa": "RRX1E53"
+  },
+  {
+    "prefixo": "AG-65",
+    "placa": "PRP6E96"
+  },
+  {
+    "prefixo": "AG-66",
+    "placa": "PRP6D56"
+  },
+  {
+    "prefixo": "AG-67",
+    "placa": "AG67"
+  },
+  {
+    "prefixo": "Automatico [915601]",
+    "placa": "915601"
+  },
+  {
+    "prefixo": "Automatico [ABC1235]",
+    "placa": "ABC1235"
+  },
+  {
+    "prefixo": "Automatico [QTQ7224]",
+    "placa": "QTQ7224"
+  },
+  {
+    "prefixo": "Caminhão Cargas GYN - 5",
+    "placa": "QTR9931"
+  },
+  {
+    "prefixo": "Ducato Cargas GYN - 6",
+    "placa": "SDC3B39"
+  },
+  {
+    "prefixo": "Fiorino Belém - RUZ2A68",
+    "placa": "RUZ2A68"
+  },
+  {
+    "prefixo": "Fiorino Goiânia - RUK7H27",
+    "placa": "RUK7H27"
+  },
+  {
+    "prefixo": "OHT8A57",
+    "placa": "OHT8A57"
+  },
+  {
+    "prefixo": "ONQ6E09",
+    "placa": "ONQ6E09"
+  },
+  {
+    "prefixo": "OOC4A69",
+    "placa": "OOC4A69"
+  },
+  {
+    "prefixo": "P36 - RRJ8A63",
+    "placa": "RRJ8A63"
+  },
+  {
+    "prefixo": "P40 - RRY0J62",
+    "placa": "RRY0J62"
+  },
+  {
+    "prefixo": "PGN2G27",
+    "placa": "PGN2G27"
+  },
+  {
+    "prefixo": "PQV1F96",
+    "placa": "PQV1F96"
+  },
+  {
+    "prefixo": "PQZ3H54",
+    "placa": "PQZ3H54"
+  },
+  {
+    "prefixo": "PQZ3I14",
+    "placa": "PQZ3I14"
+  },
+  {
+    "prefixo": "QTO8A77",
+    "placa": "QTO8A77"
+  },
+  {
+    "prefixo": "QTQ4G14",
+    "placa": "QTQ4G14"
+  },
+  {
+    "prefixo": "QTS1I54",
+    "placa": "QTS1I54"
+  },
+  {
+    "prefixo": "STRADA 01",
+    "placa": "SCE5J29"
+  }
+]

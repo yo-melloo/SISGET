@@ -1,0 +1,32 @@
+[
+  {
+    "codigo": "19001",
+    "tipo": "CARRO",
+    "status": "DISPONÍVEL",
+    "descricao": "CARRO PRONTO"
+  },
+  {
+    "codigo": "19002",
+    "tipo": "CARRO",
+    "status": "INDISPONÍVEL",
+    "descricao": "CARRO EM MANUTENÇÃO, FALTA TESTE"
+  },
+  {
+    "codigo": "19003",
+    "tipo": "CARRO",
+    "status": "DISPONÍVEL",
+    "descricao": "CARRO PRONTO"
+  },
+  {
+    "codigo": "SN 10001",
+    "tipo": "PNEU",
+    "status": "DISPONÍVEL",
+    "descricao": "PNEU PRIMEIRA VIDA"
+  },
+  {
+    "codigo": "SN 10002",
+    "tipo": "PNEU",
+    "status": "INDISPONÍVEL",
+    "descricao": "PNEU RECAPADO"
+  }
+]

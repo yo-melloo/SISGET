@@ -1,0 +1,32 @@
+# Dependencies
+**/node_modules/
+**/.venv/
+**/build/
+**/target/
+
+# IDEs and OS
+**/.idea/
+**/.vscode/
+**/.DS_Store
+*.swp
+
+# Environment and Data
+**/.env
+**/.env.local
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/fleet_data.js
+**/fleet_status.json
+**/scrape_result.png
+**/login_error.png
+**/network_log.json
+**/captured_json.json
+
+# Next.js
+**/.next/
+
+# Java
+**/.mvn/
+**/mvnw
+**/mvnw.cmd

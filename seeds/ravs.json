@@ -1,0 +1,682 @@
+[
+  {
+    "chamado": "04/11/2025",
+    "carro": "25012",
+    "envolvido": "DIVINO FERREIRA",
+    "escopo": "VEÍCULO",
+    "documentacao": "GT",
+    "status": "OK"
+  },
+  {
+    "chamado": "04/11/2025",
+    "carro": "25012",
+    "envolvido": "DIVINO FERREIRA",
+    "escopo": "VEÍCULO",
+    "documentacao": "CHECKLIST",
+    "status": "OK"
+  },
+  {
+    "chamado": "04/11/2025",
+    "carro": "25012",
+    "envolvido": "DIVINO FERREIRA",
+    "escopo": "VEÍCULO",
+    "documentacao": "TCO",
+    "status": "OK"
+  },
+  {
+    "chamado": "04/11/2025",
+    "carro": "25012",
+    "envolvido": "DIVINO FERREIRA",
+    "escopo": "VEÍCULO",
+    "documentacao": "FILMAGENS",
+    "status": "OK"
+  },
+  {
+    "chamado": "04/11/2025",
+    "carro": "25012",
+    "envolvido": "DIVINO FERREIRA",
+    "escopo": "VEÍCULO",
+    "documentacao": "CRLV",
+    "status": "OK"
+  },
+  {
+    "chamado": "04/11/2025",
+    "carro": "25012",
+    "envolvido": "DIVINO FERREIRA",
+    "escopo": "MOTORISTA",
+    "documentacao": "PPI",
+    "status": "OK"
+  },
+  {
+    "chamado": "04/11/2025",
+    "carro": "25012",
+    "envolvido": "DIVINO FERREIRA",
+    "escopo": "MOTORISTA",
+    "documentacao": "CNH",
+    "status": "OK"
+  },
+  {
+    "chamado": "04/11/2025",
+    "carro": "25012",
+    "envolvido": "DIVINO FERREIRA",
+    "escopo": "MOTORISTA",
+    "documentacao": "DEPOIMENTO",
+    "status": "OK"
+  },
+  {
+    "chamado": "04/11/2025",
+    "carro": "25012",
+    "envolvido": "DIVINO FERREIRA",
+    "escopo": "GERAL",
+    "documentacao": "DAT",
+    "status": "OK"
+  },
+  {
+    "chamado": "04/11/2025",
+    "carro": "25012",
+    "envolvido": "DIVINO FERREIRA",
+    "escopo": "TERCEIRO",
+    "documentacao": "CNH",
+    "status": "OK"
+  },
+  {
+    "chamado": "04/11/2025",
+    "carro": "25012",
+    "envolvido": "DIVINO FERREIRA",
+    "escopo": "TERCEIRO",
+    "documentacao": "CRLV",
+    "status": "OK"
+  },
+  {
+    "chamado": "04/11/2025",
+    "carro": "25012",
+    "envolvido": "DIVINO FERREIRA",
+    "escopo": "TERCEIRO",
+    "documentacao": "CONTATO",
+    "status": "OK"
+  },
+  {
+    "chamado": "20/11/2025",
+    "carro": "19003",
+    "envolvido": "JHON DOE",
+    "escopo": "VEÍCULO",
+    "documentacao": "GT",
+    "status": "OK"
+  },
+  {
+    "chamado": "20/11/2025",
+    "carro": "19003",
+    "envolvido": "JHON DOE",
+    "escopo": "VEÍCULO",
+    "documentacao": "CHECKLIST",
+    "status": "OK"
+  },
+  {
+    "chamado": "20/11/2025",
+    "carro": "19003",
+    "envolvido": "JHON DOE",
+    "escopo": "VEÍCULO",
+    "documentacao": "TCO",
+    "status": "OK"
+  },
+  {
+    "chamado": "20/11/2025",
+    "carro": "19003",
+    "envolvido": "JHON DOE",
+    "escopo": "VEÍCULO",
+    "documentacao": "FILMAGENS",
+    "status": "OK"
+  },
+  {
+    "chamado": "20/11/2025",
+    "carro": "19003",
+    "envolvido": "JHON DOE",
+    "escopo": "VEÍCULO",
+    "documentacao": "CRLV",
+    "status": "OK"
+  },
+  {
+    "chamado": "20/11/2025",
+    "carro": "19003",
+    "envolvido": "JHON DOE",
+    "escopo": "MOTORISTA",
+    "documentacao": "PPI",
+    "status": "OK"
+  },
+  {
+    "chamado": "20/11/2025",
+    "carro": "19003",
+    "envolvido": "JHON DOE",
+    "escopo": "MOTORISTA",
+    "documentacao": "CNH",
+    "status": "OK"
+  },
+  {
+    "chamado": "20/11/2025",
+    "carro": "19003",
+    "envolvido": "JHON DOE",
+    "escopo": "MOTORISTA",
+    "documentacao": "DEPOIMENTO",
+    "status": "OK"
+  },
+  {
+    "chamado": "20/11/2025",
+    "carro": "19003",
+    "envolvido": "JHON DOE",
+    "escopo": "GERAL",
+    "documentacao": "DAT",
+    "status": "N/A"
+  },
+  {
+    "chamado": "20/11/2025",
+    "carro": "19003",
+    "envolvido": "JHON DOE",
+    "escopo": "TERCEIRO",
+    "documentacao": "CNH",
+    "status": "N/A"
+  },
+  {
+    "chamado": "20/11/2025",
+    "carro": "19003",
+    "envolvido": "JHON DOE",
+    "escopo": "TERCEIRO",
+    "documentacao": "CRLV",
+    "status": "N/A"
+  },
+  {
+    "chamado": "20/11/2025",
+    "carro": "19003",
+    "envolvido": "JHON DOE",
+    "escopo": "TERCEIRO",
+    "documentacao": "CONTATO",
+    "status": "N/A"
+  },
+  {
+    "chamado": "34/11/2025",
+    "carro": "20019",
+    "envolvido": "MANOEL MESSIAS",
+    "escopo": "VEÍCULO",
+    "documentacao": "GT",
+    "status": "OK"
+  },
+  {
+    "chamado": "34/11/2025",
+    "carro": "20019",
+    "envolvido": "MANOEL MESSIAS",
+    "escopo": "VEÍCULO",
+    "documentacao": "CHECKLIST",
+    "status": "OK"
+  },
+  {
+    "chamado": "34/11/2025",
+    "carro": "20019",
+    "envolvido": "MANOEL MESSIAS",
+    "escopo": "VEÍCULO",
+    "documentacao": "TCO",
+    "status": "OK"
+  },
+  {
+    "chamado": "34/11/2025",
+    "carro": "20019",
+    "envolvido": "MANOEL MESSIAS",
+    "escopo": "VEÍCULO",
+    "documentacao": "FILMAGENS",
+    "status": "OK"
+  },
+  {
+    "chamado": "34/11/2025",
+    "carro": "20019",
+    "envolvido": "MANOEL MESSIAS",
+    "escopo": "VEÍCULO",
+    "documentacao": "CRLV",
+    "status": "OK"
+  },
+  {
+    "chamado": "34/11/2025",
+    "carro": "20019",
+    "envolvido": "MANOEL MESSIAS",
+    "escopo": "MOTORISTA",
+    "documentacao": "PPI",
+    "status": "OK"
+  },
+  {
+    "chamado": "34/11/2025",
+    "carro": "20019",
+    "envolvido": "MANOEL MESSIAS",
+    "escopo": "MOTORISTA",
+    "documentacao": "CNH",
+    "status": "ok"
+  },
+  {
+    "chamado": "34/11/2025",
+    "carro": "20019",
+    "envolvido": "MANOEL MESSIAS",
+    "escopo": "MOTORISTA",
+    "documentacao": "DEPOIMENTO",
+    "status": "OK"
+  },
+  {
+    "chamado": "34/11/2025",
+    "carro": "20019",
+    "envolvido": "MANOEL MESSIAS",
+    "escopo": "GERAL",
+    "documentacao": "DAT",
+    "status": "N/A"
+  },
+  {
+    "chamado": "34/11/2025",
+    "carro": "20019",
+    "envolvido": "MANOEL MESSIAS",
+    "escopo": "TERCEIRO",
+    "documentacao": "CNH",
+    "status": "N/A"
+  },
+  {
+    "chamado": "34/11/2025",
+    "carro": "20019",
+    "envolvido": "MANOEL MESSIAS",
+    "escopo": "TERCEIRO",
+    "documentacao": "CRLV",
+    "status": "N/A"
+  },
+  {
+    "chamado": "34/11/2025",
+    "carro": "20019",
+    "envolvido": "MANOEL MESSIAS",
+    "escopo": "TERCEIRO",
+    "documentacao": "CONTATO",
+    "status": "N/A"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "19022",
+    "envolvido": "ANTONIO MARCIO SENA",
+    "escopo": "VEÍCULO",
+    "documentacao": "GT",
+    "status": "OK"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "19022",
+    "envolvido": "ANTONIO MARCIO SENA",
+    "escopo": "VEÍCULO",
+    "documentacao": "CHECKLIST",
+    "status": "OK"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "19022",
+    "envolvido": "ANTONIO MARCIO SENA",
+    "escopo": "VEÍCULO",
+    "documentacao": "TCO",
+    "status": "OK"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "19022",
+    "envolvido": "ANTONIO MARCIO SENA",
+    "escopo": "VEÍCULO",
+    "documentacao": "FILMAGENS",
+    "status": "OK"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "19022",
+    "envolvido": "ANTONIO MARCIO SENA",
+    "escopo": "VEÍCULO",
+    "documentacao": "CRLV",
+    "status": "OK"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "19022",
+    "envolvido": "ANTONIO MARCIO SENA",
+    "escopo": "MOTORISTA",
+    "documentacao": "PPI",
+    "status": "OK"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "19022",
+    "envolvido": "ANTONIO MARCIO SENA",
+    "escopo": "MOTORISTA",
+    "documentacao": "CNH",
+    "status": "OK"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "19022",
+    "envolvido": "ANTONIO MARCIO SENA",
+    "escopo": "MOTORISTA",
+    "documentacao": "DEPOIMENTO",
+    "status": "OK"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "19022",
+    "envolvido": "ANTONIO MARCIO SENA",
+    "escopo": "GERAL",
+    "documentacao": "DAT",
+    "status": "N/A"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "19022",
+    "envolvido": "ANTONIO MARCIO SENA",
+    "escopo": "TERCEIRO",
+    "documentacao": "CNH",
+    "status": "N/A"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "19022",
+    "envolvido": "ANTONIO MARCIO SENA",
+    "escopo": "TERCEIRO",
+    "documentacao": "CRLV",
+    "status": "N/A"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "19022",
+    "envolvido": "ANTONIO MARCIO SENA",
+    "escopo": "TERCEIRO",
+    "documentacao": "CONTATO",
+    "status": "N/A"
+  },
+  {
+    "chamado": "93/11/2025",
+    "carro": "19022",
+    "envolvido": "GILVAN NUNES",
+    "escopo": "VEÍCULO",
+    "documentacao": "GT",
+    "status": "OK"
+  },
+  {
+    "chamado": "93/11/2025",
+    "carro": "19022",
+    "envolvido": "GILVAN NUNES",
+    "escopo": "VEÍCULO",
+    "documentacao": "CHECKLIST",
+    "status": "OK"
+  },
+  {
+    "chamado": "93/11/2025",
+    "carro": "19022",
+    "envolvido": "GILVAN NUNES",
+    "escopo": "VEÍCULO",
+    "documentacao": "TCO",
+    "status": "OK"
+  },
+  {
+    "chamado": "93/11/2025",
+    "carro": "19022",
+    "envolvido": "GILVAN NUNES",
+    "escopo": "VEÍCULO",
+    "documentacao": "FILMAGENS",
+    "status": "OK"
+  },
+  {
+    "chamado": "93/11/2025",
+    "carro": "19022",
+    "envolvido": "GILVAN NUNES",
+    "escopo": "VEÍCULO",
+    "documentacao": "CRLV",
+    "status": "OK"
+  },
+  {
+    "chamado": "93/11/2025",
+    "carro": "19022",
+    "envolvido": "GILVAN NUNES",
+    "escopo": "MOTORISTA",
+    "documentacao": "PPI",
+    "status": "OK"
+  },
+  {
+    "chamado": "93/11/2025",
+    "carro": "19022",
+    "envolvido": "GILVAN NUNES",
+    "escopo": "MOTORISTA",
+    "documentacao": "CNH",
+    "status": "OK"
+  },
+  {
+    "chamado": "93/11/2025",
+    "carro": "19022",
+    "envolvido": "GILVAN NUNES",
+    "escopo": "MOTORISTA",
+    "documentacao": "DEPOIMENTO",
+    "status": "OK"
+  },
+  {
+    "chamado": "93/11/2025",
+    "carro": "19022",
+    "envolvido": "GILVAN NUNES",
+    "escopo": "GERAL",
+    "documentacao": "DAT",
+    "status": "N/A"
+  },
+  {
+    "chamado": "93/11/2025",
+    "carro": "19022",
+    "envolvido": "GILVAN NUNES",
+    "escopo": "TERCEIRO",
+    "documentacao": "CNH",
+    "status": "N/A"
+  },
+  {
+    "chamado": "93/11/2025",
+    "carro": "19022",
+    "envolvido": "GILVAN NUNES",
+    "escopo": "TERCEIRO",
+    "documentacao": "CRLV",
+    "status": "N/A"
+  },
+  {
+    "chamado": "93/11/2025",
+    "carro": "19022",
+    "envolvido": "GILVAN NUNES",
+    "escopo": "TERCEIRO",
+    "documentacao": "CONTATO",
+    "status": "N/A"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "17100",
+    "envolvido": "WESLEY PAIVA",
+    "escopo": "VEÍCULO",
+    "documentacao": "GT",
+    "status": "OK"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "17100",
+    "envolvido": "WESLEY PAIVA",
+    "escopo": "VEÍCULO",
+    "documentacao": "CHECKLIST",
+    "status": "OK"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "17100",
+    "envolvido": "WESLEY PAIVA",
+    "escopo": "VEÍCULO",
+    "documentacao": "TCO",
+    "status": "OK"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "17100",
+    "envolvido": "WESLEY PAIVA",
+    "escopo": "VEÍCULO",
+    "documentacao": "FILMAGENS",
+    "status": "FALTA"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "17100",
+    "envolvido": "WESLEY PAIVA",
+    "escopo": "VEÍCULO",
+    "documentacao": "CRLV",
+    "status": "OK"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "17100",
+    "envolvido": "WESLEY PAIVA",
+    "escopo": "MOTORISTA",
+    "documentacao": "PPI",
+    "status": "FALTA"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "17100",
+    "envolvido": "WESLEY PAIVA",
+    "escopo": "MOTORISTA",
+    "documentacao": "CNH",
+    "status": "FALTA"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "17100",
+    "envolvido": "WESLEY PAIVA",
+    "escopo": "MOTORISTA",
+    "documentacao": "DEPOIMENTO",
+    "status": "FALTA"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "17100",
+    "envolvido": "WESLEY PAIVA",
+    "escopo": "GERAL",
+    "documentacao": "DAT",
+    "status": "N/A"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "17100",
+    "envolvido": "WESLEY PAIVA",
+    "escopo": "TERCEIRO",
+    "documentacao": "CNH",
+    "status": "N/A"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "17100",
+    "envolvido": "WESLEY PAIVA",
+    "escopo": "TERCEIRO",
+    "documentacao": "CRLV",
+    "status": "N/A"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "17100",
+    "envolvido": "WESLEY PAIVA",
+    "escopo": "TERCEIRO",
+    "documentacao": "CONTATO",
+    "status": "N/A"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "24015",
+    "envolvido": "ERNANDES",
+    "escopo": "VEÍCULO",
+    "documentacao": "GT",
+    "status": "FALTA"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "24015",
+    "envolvido": "ERNANDES",
+    "escopo": "VEÍCULO",
+    "documentacao": "CHECKLIST",
+    "status": "FALTA"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "24015",
+    "envolvido": "ERNANDES",
+    "escopo": "VEÍCULO",
+    "documentacao": "TCO",
+    "status": "FALTA"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "24015",
+    "envolvido": "ERNANDES",
+    "escopo": "VEÍCULO",
+    "documentacao": "FILMAGENS",
+    "status": "FALTA"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "24015",
+    "envolvido": "ERNANDES",
+    "escopo": "VEÍCULO",
+    "documentacao": "CRLV",
+    "status": "FALTA"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "24015",
+    "envolvido": "ERNANDES",
+    "escopo": "MOTORISTA",
+    "documentacao": "PPI",
+    "status": "FALTA"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "24015",
+    "envolvido": "ERNANDES",
+    "escopo": "MOTORISTA",
+    "documentacao": "CNH",
+    "status": "FALTA"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "24015",
+    "envolvido": "ERNANDES",
+    "escopo": "MOTORISTA",
+    "documentacao": "DEPOIMENTO",
+    "status": "FALTA"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "24015",
+    "envolvido": "ERNANDES",
+    "escopo": "GERAL",
+    "documentacao": "DAT",
+    "status": "N/A"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "24015",
+    "envolvido": "ERNANDES",
+    "escopo": "TERCEIRO",
+    "documentacao": "CNH",
+    "status": "N/A"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "24015",
+    "envolvido": "ERNANDES",
+    "escopo": "TERCEIRO",
+    "documentacao": "CRLV",
+    "status": "N/A"
+  },
+  {
+    "chamado": "SEM CHAMADO",
+    "carro": "24015",
+    "envolvido": "ERNANDES",
+    "escopo": "TERCEIRO",
+    "documentacao": "CONTATO",
+    "status": "N/A"
+  },
+  {
+    "chamado": "será substituido por aplicação desktop",
+    "carro": null,
+    "envolvido": null,
+    "escopo": null,
+    "documentacao": null,
+    "status": null
+  }
+]
