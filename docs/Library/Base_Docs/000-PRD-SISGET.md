@@ -1,8 +1,8 @@
 # PRD — SISGET WEB (Sistema de Gerenciamento de Tráfego)
 
-> **Versão:** 1.0  
+> **Versão:** 1.1  
 > **Autor:** Auxiliar de Tráfego / Desenvolvedor (Gustavo Mello)  
-> **Data:** 15/04/2026  
+> **Data:** 18/04/2026  
 > **Status:** Aprovado  
 
 ---
@@ -29,7 +29,10 @@ Automatizar os processos de trabalho (workflow) e rotinas administrativas dos au
 
 **Quem:** Auxiliares de Tráfego da Satélite Norte (Imperatriz/MA).
 
-**Perfil Técnico:** Usuários com conhecimento mínimo de informática. O sistema deve ser projetado prevendo baixa familiaridade tecnológica — priorizando interfaces intuitivas, labels descritivas e fluxos guiados. Mesmo que o nível atual não seja tão básico assim, é melhor projetar para auxiliares futuros assumindo fraqueza em informática.
+**Perfil Técnico:** Usuários com conhecimento mínimo de informática. O sistema deve ser projetado prevendo baixa familiaridade tecnológica — priorizando interfaces intuitivas, labels descritivas e fluxos guiados.
+
+**Acesso e Permissões:**
+Apesar da hierarquia operacional real (Assistentes < Monitores < Coordenadores < Gerentes), a aplicação SISGET provê **acesso compartilhado e irrestrito a todos os módulos** para todos os cargos. O objetivo é a colaboração e a fluidez do plantão, sem barreiras de software.
 
 **Necessidade Central:** Consultar e registrar informações operacionais do plantão de forma rápida, segura e sem depender de fórmulas Excel.
 
@@ -88,7 +91,9 @@ Monitoramento de 2 tanques de 15.000 litros cada.
 | Volume (litros) | Resultado da conversão automática |
 | Total | Soma dos volumes |
 
-- **Botão "Atualizar Medição":** Abre a calculadora de volumetria embutida, que converte cm → litros com base na tabela técnica de medição.
+- **Ações Disponíveis:**
+    1. **Medição Diária:** Registro de rotina do nível dos tanques.
+    2. **Descarregamento (Caminhão Comboio):** Auditoria de entrada de diesel (Medição Inicial vs Nota Fiscal vs Medição Final).
 - **Timestamp de atualização:** Exibir quem atualizou e quando (ex: "atualizado em: 13/04/26 – 07:38 (GUSTAVO)").
 
 ### 4.3 Módulo: Controle de Frota
@@ -125,7 +130,8 @@ Duas tabelas idênticas em estrutura, separadas por turno.
 - Seção lateral: CARROS RESERVA, PNEUS RESERVA, OCORRÊNCIAS, OUTROS.
 
 ### 4.4 Módulo: Escala do Fluxo (Diária)
-Visualização da escala de tráfego do dia. A fonte primária é uma **planilha online do SharePoint Excel** — o sistema deve saber consumir e segregar os dados da mesma maneira que a planilha atual faz.
+Visualização da escala de tráfego do dia. A fonte primária é uma **planilha online do SharePoint Excel**.
+- **Nota Importante:** Este módulo refere-se exclusivamente à **Escala do Fluxo de Frota** (dados operacionais diários). Não inclui validações de RH (descanso, 11h, 6+1), que pertencem ao futuro processo de "Escala de Motoristas".
 
 | Coluna | Descrição |
 |--------|-----------|
@@ -233,6 +239,7 @@ Base de dados inicial com 604 motoristas e 170 veículos (extraídos da aba ocul
 - Consulta Rápida (Placa ↔ Frota, Motorista)
 - Cadastro de Motoristas e Veículos
 - Seeds de dados iniciais da planilha SISGET
+- **Gestão de RAVs (Relatórios de Avaria e Sinistro)**
 
 ### ✅ Concluído Antecipado (Bot de Rastreamento)
 - **Bot Playwright** para coleta de rastreamento (Life Online): ✅ 167 veículos capturados com GPS (`sisget/bot/scrape_bot.py`). Decisão de arquitetura em `ADRs/003-Bot-Scraping-Playwright-LifeOnline.md`.
@@ -252,7 +259,6 @@ Base de dados inicial com 604 motoristas e 170 veículos (extraídos da aba ocul
 - Validação em ambiente de produção
 
 ### 📋 Backlog (pós-Beta 2)
-- Módulo de Gestão de RAVs
 - Módulo de Gestão de Pessoal (Dobras / Refeição)
 - Chat em Tempo Real (Lateral Direita)
 - Pontos de Apoio (PAs)

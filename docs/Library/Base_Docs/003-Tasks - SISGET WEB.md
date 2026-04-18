@@ -13,10 +13,10 @@
 - **Módulo:** Infraestrutura
 - **Descrição:** Criar projeto Spring Boot com estrutura de pastas (controller, service, repository, model, config). Configurar SQLite como banco de dados, `.env` para variáveis sensíveis, `.gitignore` atualizado.
 - **Critérios de aceite:**
-  - [ ] Projeto compila e roda sem erros
+  - [x] Projeto compila e roda sem erros
   - [ ] SQLite configurado e criando arquivo de banco
-  - [ ] `.env` com variáveis de exemplo e `.env.example` no repo
-  - [ ] `.gitignore` inclui `.env`, `*.db`, `node_modules/`, etc.
+  - [x] `.env` com variáveis de exemplo e `.env.example` no repo
+  - [x] `.gitignore` inclui `.env`, `*.db`, `node_modules/`, etc.
 - **Dependências:** Nenhuma
 
 ### TASK-002: Inicializar projeto front-end (Next.js)
@@ -124,13 +124,14 @@
 ### TASK-010: UI de Combustível
 - **Prioridade:** 🟡
 - **Módulo:** Garagem / UI
-- **Descrição:** Visualização dos tanques (barra de progresso) + botão "Atualizar Medição" com calculadora embutida.
+- **Descrição:** Visualização dos tanques + ações de atualização.
 - **Critérios de aceite:**
-  - [ ] Barras de progresso para cada tanque (volume/15000L)
-  - [ ] Botão "Atualizar Medição" abre modal com input cm
-  - [ ] Conversão cm → litros exibida em tempo real
-  - [ ] Timestamp de última atualização visível
-- **Status:** ✅ Concluído (Tanques, Cores Reativas e Análise de Fluxo)
+- [x] Barras de progresso reativas
+- [ ] Ação A: "Medição Diária" (Input simples cm)
+- [ ] Ação B: "Descarregamento" (Formulário: Inicial, Final, Volume NF)
+- [ ] Cálculo automático de variação/auditoria no descarregamento
+- [x] Timestamp + Autor visíveis
+- **Status:** ✅ Parcialmente Concluído (Base funcional, falta auditoria NF)
 - **Dependências:** TASK-006, TASK-009
 
 ---
@@ -189,15 +190,15 @@
 
 ## Fase 4 — Escala e Consulta
 
-### TASK-015: Integração Escala do Fluxo (SharePoint)
+### TASK-015: Sincronização Escala do Fluxo (SharePoint)
 - **Prioridade:** 🟡
 - **Módulo:** Escala / API
-- **Descrição:** Desenvolver serviço de consumo da planilha Excel Online (SharePoint) da Escala do Fluxo. Parse e segregação dos dados por base/turno.
+- **Descrição:** Desenvolver serviço de consumo da planilha Excel Online (SharePoint). Foco total no input de dados para a base operacional diária.
 - **Critérios de aceite:**
-  - [ ] Serviço lê a planilha SharePoint (via API ou download)
-  - [ ] Dados parseados e mapeados para as entidades do sistema
-  - [ ] Segregação correta por base e turno
-  - [ ] Fallback: inserção manual caso integração falhe
+- [ ] Serviço lê a planilha SharePoint
+- [ ] Dados mapeados para a grade operacional do SISGET
+- [ ] Sincronismo funcional sem regras de validação de RH/descanso
+- [ ] Fallback: inserção manual total funcional
 - **Dependências:** TASK-003
 - **RF:** RF-08
 
@@ -247,6 +248,21 @@
 - **Dependências:** Nenhuma
 - **RF:** RF-12
 - **Nota:** Implementado antecipadamente. Próximo passo: endpoint `GET /api/rastreamento` no Spring Boot + `@Scheduled` para atualização periódica.
+
+---
+
+## Fase 6 — Gestão de RAVs (Relatórios de Avaria)
+
+### TASK-024: Módulo RAV - Dossiê Digital
+- **Prioridade:** 🟡
+- **Módulo:** RAV / Full-stack
+- **Descrição:** Implementar o ciclo de vida do RAV com persistência imutável. Incluir upload de dossiê (CRLV, Checklist, Guia de Tráfego, Tacógrafo, Depoimento digitalizado).
+- **Critérios de aceite:**
+- [ ] CRUD de RAV com proteção contra delete
+- [ ] Upload múltiplo de arquivos por registro
+- [ ] Status de validação ("Pendente" -> "Arquivado" pelo Coordenador)
+- [ ] Relato de depoimento como campo de texto longo ou anexo digitalizado
+- **Dependências:** TASK-003
 
 ---
 
