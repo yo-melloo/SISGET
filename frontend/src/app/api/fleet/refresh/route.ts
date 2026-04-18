@@ -8,46 +8,29 @@ const execPromise = util.promisify(exec);
 
 export async function POST() {
   try {
-    // Resolve caminhos absolutos para evitar erros de CWD
-    // O frontend está em sisget/frontend, subimos um nível para sisget/
-    const frontendDir = process.cwd();
-    const sisgetDir = path.resolve(frontendDir, '..');
+    const sisgetDir = path.resolve(process.cwd(), '..');
     
-    // 1. Tenta o Python Portátil em sisget/runtime/python/python.exe
+    // Tenta o Python Portátil ou o do sistema
     const portablePython = path.join(sisgetDir, 'runtime', 'python', 'python.exe');
-    
-    // 2. Se não existir, usa o do sistema como fallback
     const pythonPath = fs.existsSync(portablePython) ? portablePython : 'python';
     
     const botDir = path.join(sisgetDir, 'bot');
     const scriptPath = path.join(botDir, 'scrape_bot.py');
 
-    console.log(`[REFRESH] Usando runtime: ${pythonPath === 'python' ? 'SISTEMA' : 'PORTÁTIL'}`);
-    console.log(`[REFRESH] Script: ${scriptPath}`);
+    console.log(`[REFRESH] Disparando bot manual: ${pythonPath}`);
     
-    // Executa e aguarda o resultado do scraper otimizado (< 1s)
-    const { stdout, stderr } = await execPromise(`"${pythonPath}" "${scriptPath}"`, { 
-      cwd: botDir,
-      timeout: 30000 // 30 segundos é mais que suficiente para o novo bot
-    });
+    // Executa o bot. Ele vai fazer o scrape e dar POST no Spring Boot.
+    // Não esperamos o bot terminar para não travar a UI por 20s, 
+    // mas o usuário verá o status de "Sincronizando"
+    exec(`"${pythonPath}" "${scriptPath}"`, { cwd: botDir });
     
-    if (stderr && !stdout) {
-      console.warn('[REFRESH] Avisos do bot (stderr):', stderr);
-    }
-
-    console.log('[REFRESH] Bot finalizado com sucesso');
     return NextResponse.json({ 
       success: true, 
-      message: 'Frota atualizada com sucesso',
-      logs: stdout 
+      message: 'Bot disparado em segundo plano' 
     });
 
   } catch (error: any) {
-    console.error('[REFRESH] Falha Crítica:', error);
-    return NextResponse.json({ 
-      error: 'Falha ao atualizar frota', 
-      details: error.message,
-      command: error.cmd
-    }, { status: 500 });
+    console.error('[REFRESH] Erro ao disparar bot:', error);
+    return NextResponse.json({ error: 'Falha ao disparar bot' }, { status: 500 });
   }
 }
