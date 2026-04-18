@@ -93,3 +93,25 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* Modo Noturno (Item 11) - Foco em Conforto Visual e Hierarquia de Vias */
+.night-mode .leaflet-tile-pane {
+  filter: brightness(0.5) contrast(1.4) saturate(0.7) sepia(0.1) !important;
+  transition: filter 0.5s ease;
+}
+
+.night-mode .leaflet-container {
+  background: #020617 !important; /* Fundo Slate 950 */
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}

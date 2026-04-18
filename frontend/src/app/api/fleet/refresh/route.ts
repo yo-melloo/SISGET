@@ -10,23 +10,34 @@ export async function POST() {
   try {
     const sisgetDir = path.resolve(process.cwd(), '..');
     
-    // Tenta o Python Portátil ou o do sistema
+    // Prioridade: Venv do Bot > Python Portátil > Global
+    const venvPython = path.join(sisgetDir, 'bot', 'venv', 'Scripts', 'python.exe');
     const portablePython = path.join(sisgetDir, 'runtime', 'python', 'python.exe');
-    const pythonPath = fs.existsSync(portablePython) ? portablePython : 'python';
+    
+    let pythonPath = 'python';
+    if (fs.existsSync(venvPython)) {
+        pythonPath = venvPython;
+    } else if (fs.existsSync(portablePython)) {
+        pythonPath = portablePython;
+    }
     
     const botDir = path.join(sisgetDir, 'bot');
     const scriptPath = path.join(botDir, 'scrape_bot.py');
 
-    console.log(`[REFRESH] Disparando bot manual: ${pythonPath}`);
+    console.log(`[REFRESH] Disparando sincronização: ${pythonPath}`);
     
-    // Executa o bot. Ele vai fazer o scrape e dar POST no Spring Boot.
-    // Não esperamos o bot terminar para não travar a UI por 20s, 
-    // mas o usuário verá o status de "Sincronizando"
-    exec(`"${pythonPath}" "${scriptPath}"`, { cwd: botDir });
+    // Executa o bot e AGUARDA (await) para manter o Loading Lock no frontend.
+    // Timeout de 30s conforme solicitado.
+    await execPromise(`"${pythonPath}" "${scriptPath}"`, { 
+      cwd: botDir,
+      timeout: 30000 
+    });
     
+    console.log(`[REFRESH] Bot finalizado com sucesso.`);
+
     return NextResponse.json({ 
       success: true, 
-      message: 'Bot disparado em segundo plano' 
+      message: 'Sincronização concluída' 
     });
 
   } catch (error: any) {

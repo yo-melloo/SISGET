@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -19,8 +20,11 @@ public class FleetStatusController {
     private final FleetStatusService fleetStatusService;
 
     @GetMapping("/latest")
-    public List<FleetCurrent> getLatestFleetStatus() {
-        return fleetStatusService.getAllLatest();
+    public Map<String, Object> getLatestFleetStatus() {
+        return Map.of(
+            "fleet", fleetStatusService.getAllLatest(),
+            "lastSync", fleetStatusService.getLastGlobalSync().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+        );
     }
 
     @PostMapping("/update-batch")
@@ -46,5 +50,13 @@ public class FleetStatusController {
         boolean active = payload.getOrDefault("active", false);
         fleetStatusService.setAutoRefreshActive(active);
         return Map.of("active", fleetStatusService.isAutoRefreshActive());
+    }
+
+    @GetMapping("/sync-info")
+    public Map<String, Object> getSyncInfo() {
+        return Map.of(
+            "lastSync", fleetStatusService.getLastGlobalSync().format(DateTimeFormatter.ofPattern("HH:mm:ss")),
+            "autoActive", fleetStatusService.isAutoRefreshActive()
+        );
     }
 }
