@@ -187,7 +187,6 @@ export default function TrackingPage() {
         <div className="p-5 bg-gradient-to-r from-blue-600 to-blue-500 text-white flex justify-between items-center">
           <div>
             <h1 className="text-sm font-black uppercase tracking-[0.2em] mb-1" style={{fontFamily: 'var(--font-outfit)'}}>SISGET <span className="opacity-70">FROTA</span></h1>
-            <p className="text-[10px] uppercase tracking-widest font-semibold opacity-90">Rastreamento Tático</p>
           </div>
           <div className="flex items-center gap-3">
             <button 
@@ -218,7 +217,7 @@ export default function TrackingPage() {
             <input 
               type="text" 
               className="w-full bg-[var(--card-bg)] border border-[var(--border)] text-[var(--foreground)] text-sm rounded-lg pl-10 pr-4 py-2.5 focus:border-blue-500 outline-none transition-colors placeholder:text-[var(--foreground-muted)]"
-              placeholder="Buscar prefixo..."
+              placeholder="Buscar placa, prefixo ou motorista..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -233,7 +232,7 @@ export default function TrackingPage() {
                     : 'bg-[var(--secondary)] border-[var(--border)] text-[var(--foreground-muted)] hover:border-amber-500/50'}`}
             >
                <Bell className={`w-3 h-3 ${onlyOccurrences ? 'fill-amber-500' : ''}`} />
-               {onlyOccurrences ? 'Filtrando Ocorrências' : 'Todas as Ocorrências'}
+               {onlyOccurrences ? 'Filtrando Ocorrências' : 'Filtrar Ocorrências'}
             </button>
           </div>
         </div>
