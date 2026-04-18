@@ -15,7 +15,7 @@ import {
   ExternalLink,
   Plus
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 import * as XLSX from "xlsx";
 

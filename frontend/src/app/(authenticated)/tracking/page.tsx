@@ -40,21 +40,66 @@ export default function TrackingPage() {
   const [occurrences, setOccurrences] = useState<Record<string, string>>({});
   const [onlyOccurrences, setOnlyOccurrences] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(false);
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
+  const BACKEND_URL = "http://localhost:8080"; // Em prod, usar variável de ambiente
+
   const loadFleet = async () => {
     try {
-      const res = await fetch("/api/fleet/status");
+      const res = await fetch(`${BACKEND_URL}/api/fleet/latest`);
       const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      
+      if (!Array.isArray(data)) {
+        console.warn("Backend não retornou uma lista de frota:", data);
+        setFleet([]);
+        return;
+      }
+
       const parsed = data.map((v: any) => ({
-        ...v,
-        id: v.VEICPREFIXO || v.VEICCODIGO,
-        lat: parseFloat(v.RASTLATITUDE),
-        lng: parseFloat(v.RASTLONGITUDE)
+        id: v.vehicleId,
+        lat: v.latitude,
+        lng: v.longitude,
+        VEICPLACA: v.plate,
+        RASTVELOCIDADE: String(v.speed),
+        FUNCNOME: v.driverName,
+        ROTANOME: v.routeName,
+        AREANOME: v.areaName,
+        STATUS: v.status,
+        RASTDATA: v.transmissionDate,
+        VEICODOMETRO: v.odometer,
+        MED_VALOR: v.fuelLevel,
+        VEICCATNOME: v.category,
+        RASTGIRO: v.rpm
       })).filter((v: FleetVehicle) => !isNaN(v.lat) && !isNaN(v.lng));
       setFleet(parsed);
+    } catch (e) {
+      console.error("Erro ao carregar frota do backend:", e);
+    }
+  };
+
+  const fetchAutoStatus = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/fleet/auto-status`);
+      const data = await res.json();
+      setAutoRefresh(data.active);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleToggleAuto = async () => {
+    const newState = !autoRefresh;
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/fleet/toggle-auto`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: newState })
+      });
+      if (res.ok) {
+        setAutoRefresh(newState);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -77,12 +122,14 @@ export default function TrackingPage() {
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     try {
-      // Primeiro dispara a ação do bot (Scraper)
-      await fetch("/api/fleet/refresh", { method: 'POST' });
-      // Depois recarrega os dados locais
-      await Promise.all([loadFleet(), fetchOccurrences()]);
+        // Dispara o bot (Scraper) - O bot vai enviar as coordenadas para o Spring Boot
+        await fetch("/api/fleet/refresh", { method: 'POST' });
+        
+        // Aguarda um pouco para o bot processar (ou apenas recarrega os dados atuais)
+        await loadFleet();
+        await fetchOccurrences();
     } catch (e) {
-      console.error("Falha ao atualizar bot:", e);
+      console.error("Falha ao disparar sincronização:", e);
     } finally {
       setIsRefreshing(false);
     }
@@ -92,9 +139,9 @@ export default function TrackingPage() {
     setMounted(true);
     fetchOccurrences();
     loadFleet();
+    fetchAutoStatus();
     const interval = setInterval(() => {
         loadFleet();
-        fetchOccurrences();
     }, 5000); 
     return () => clearInterval(interval);
   }, []);
@@ -142,14 +189,27 @@ export default function TrackingPage() {
             <h1 className="text-sm font-black uppercase tracking-[0.2em] mb-1" style={{fontFamily: 'var(--font-outfit)'}}>SISGET <span className="opacity-70">FROTA</span></h1>
             <p className="text-[10px] uppercase tracking-widest font-semibold opacity-90">Rastreamento Tático</p>
           </div>
-          <button 
-            onClick={handleManualRefresh}
-            disabled={isRefreshing}
-            className={`p-2 hover:bg-white/10 rounded-lg transition-colors group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
-            title="Sincronizar com Servidor LifeWeb"
-          >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : 'group-active:rotate-180'} transition-transform duration-500`} />
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleToggleAuto}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-tighter transition-all border ${
+                autoRefresh 
+                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.2)]' 
+                : 'bg-red-500/10 border-red-500/50 text-red-500'
+              }`}
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${autoRefresh ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+              {autoRefresh ? 'Auto ON' : 'Auto OFF'}
+            </button>
+            <button 
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              className={`p-2 hover:bg-white/10 rounded-lg transition-colors group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title="Recarregar Dados do Backend"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : 'group-active:rotate-180'} transition-transform duration-500`} />
+            </button>
+          </div>
         </div>
         
         <div className="p-4 bg-[var(--background)] border-b border-[var(--border)] space-y-3">
