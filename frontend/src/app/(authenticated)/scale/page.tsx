@@ -15,7 +15,7 @@ import {
   ExternalLink,
   Plus
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 import * as XLSX from "xlsx";
 
@@ -301,7 +301,6 @@ export default function ScalePage() {
               {filteredEscala.length > 0 ? (
                 filteredEscala.map((item, idx) => (
                   <motion.tr 
-
                     key={item.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
