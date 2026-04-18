@@ -43,6 +43,7 @@ export default function TrackingPage() {
   const [autoRefresh, setAutoRefresh] = useState(false);
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [customFocus, setCustomFocus] = useState<[number, number] | null>(null);
 
   const BACKEND_URL = "http://localhost:8080"; // Em prod, usar variável de ambiente
 
@@ -167,10 +168,45 @@ export default function TrackingPage() {
   };
 
   const filteredFleet = fleet.filter(v => {
-    const matchesSearch = v.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const search = searchTerm.toLowerCase();
+    const matchesSearch = 
+      v.id.toLowerCase().includes(search) || 
+      (v.VEICPLACA && v.VEICPLACA.toLowerCase().includes(search)) ||
+      (v.FUNCNOME && v.FUNCNOME.toLowerCase().includes(search));
     const hasOccurrence = !!occurrences[v.id];
     return onlyOccurrences ? (matchesSearch && hasOccurrence) : matchesSearch;
   });
+
+  const handleUniversalSearch = async (term: string) => {
+    setSearchTerm(term);
+    setCustomFocus(null); // Reset focus point on new search
+    
+    // Se o usuário digitou algo mas não há veículos correspondentes, e o termo parece ser um lugar (ex: > 3 chars)
+    if (term.length > 3 && fleet.filter(v => 
+      v.id.toLowerCase().includes(term.toLowerCase()) || 
+      v.VEICPLACA?.toLowerCase().includes(term.toLowerCase())
+    ).length === 0) {
+       // Debounce or trigger on Enter would be better, but let's implement a simple logic
+    }
+  };
+
+  // Trigger geocoding when user presses Enter and no vehicle is found
+  const handleKeyDown = async (e: React.KeyboardEvent) => {
+     if (e.key === 'Enter' && searchTerm.trim() && filteredFleet.length === 0) {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchTerm)}&limit=1`, {
+              headers: { 'User-Agent': 'SISGET/2.0' }
+          });
+          const results = await res.json();
+          if (results && results.length > 0) {
+             setCustomFocus([parseFloat(results[0].lat), parseFloat(results[0].lon)]);
+             setSelectedCar(null);
+          }
+        } catch (err) {
+          console.error(err);
+        }
+     }
+  };
 
   const selectedVehicle = fleet.find(v => v.id === selectedCar);
 
@@ -219,7 +255,8 @@ export default function TrackingPage() {
               className="w-full bg-[var(--card-bg)] border border-[var(--border)] text-[var(--foreground)] text-sm rounded-lg pl-10 pr-4 py-2.5 focus:border-blue-500 outline-none transition-colors placeholder:text-[var(--foreground-muted)]"
               placeholder="Buscar placa, prefixo ou motorista..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleUniversalSearch(e.target.value)}
+              onKeyDown={handleKeyDown}
             />
           </div>
 
@@ -304,8 +341,12 @@ export default function TrackingPage() {
           fleet={filteredFleet} 
           occurrences={occurrences} 
           selectedCar={selectedCar} 
-          onSelectCar={(id: string) => setSelectedCar(id)}
+          onSelectCar={(id: string) => {
+            setSelectedCar(id);
+            setCustomFocus(null);
+          }}
           theme={theme}
+          customFocus={customFocus}
         />
 
         {/* Detail Panel - Right Sidebar Overlay */}

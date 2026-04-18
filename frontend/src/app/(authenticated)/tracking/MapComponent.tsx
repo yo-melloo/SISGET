@@ -11,25 +11,28 @@ interface MapComponentProps {
   selectedCar: string | null;
   onSelectCar: (id: string) => void;
   theme?: string;
+  customFocus?: [number, number] | null;
 }
 
 type MapView = 'standard' | 'satellite' | 'hybrid';
 
-// Componente helper para recarregar ou focar em carrinhos selecionados
-function FocusMap({ selectedCar, fleet }: { selectedCar: string | null, fleet: any[] }) {
+// Componente helper para recarregar ou focar em carrinhos selecionados ou pontos customizados
+function FocusMap({ selectedCar, fleet, customFocus }: { selectedCar: string | null, fleet: any[], customFocus?: [number, number] | null }) {
   const map = useMap();
   useEffect(() => {
     if (selectedCar) {
       const car = fleet.find(v => v.id === selectedCar);
       if (car && car.lat && car.lng) {
-        map.setView([car.lat, car.lng], 15, { animate: true });
+        map.flyTo([car.lat, car.lng], 15, { duration: 1.5 });
       }
+    } else if (customFocus) {
+      map.flyTo(customFocus, 12, { duration: 2 });
     }
-  }, [selectedCar, fleet, map]);
+  }, [selectedCar, fleet, customFocus, map]);
   return null;
 }
 
-export default function MapComponent({ fleet, occurrences, selectedCar, onSelectCar, theme }: MapComponentProps) {
+export default function MapComponent({ fleet, occurrences, selectedCar, onSelectCar, theme, customFocus }: MapComponentProps) {
   const mapRef = useRef<any>(null);
   const [mapView, setMapView] = useState<MapView | 'dark'>('standard');
   const [showTraffic, setShowTraffic] = useState(false);
@@ -68,7 +71,7 @@ export default function MapComponent({ fleet, occurrences, selectedCar, onSelect
           <TileLayer url={trafficTile} opacity={0.7} />
         )}
 
-        <FocusMap selectedCar={selectedCar} fleet={fleet} />
+        <FocusMap selectedCar={selectedCar} fleet={fleet} customFocus={customFocus} />
 
         {fleet.map(v => {
           const hasNote = !!occurrences[v.id];
