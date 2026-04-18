@@ -158,7 +158,7 @@
   - [ ] Linhas "CANCELADO" com fundo vermelho
   - [ ] Rodapé: Carro Reserva (verde), Grade Futura (amarelo), Indisponível (vermelho)
   - [ ] Responsivo (stack vertical em telas pequenas)
-- **Status:** ✅ Concluído (Tabelas lado a lado e resumo colorido)
+- **Status:** ✅ Concluído (Integração Total com Mapa, MCR/DNIT e Real-time)
 - **Dependências:** TASK-006, TASK-011
 
 ### TASK-013: API de Operação de Frota (Diurna/Noturna)
@@ -284,7 +284,7 @@
   - [ ] Loading skeletons em todas as consultas
   - [ ] Layout responsivo validado em desktop e tablet
   - [ ] Cores de status consistentes em todos os módulos
-- **Status:** 🟡 Em Progresso (Notificações, Centralização e Contraste concluídos)
+- **Status:** ✅ Concluído (Foco Inteligente, Fullscreen Global, Persistência e Saneamento de Contraste)
 - **Dependências:** Todas as TASKs de UI
 
 ---
