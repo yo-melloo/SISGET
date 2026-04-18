@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "motion/react";
 export interface FilterOption {
   label: string;
   value: string;
-  category: "BASE" | "ROTA" | "OUTROS";
+  category: "BASE" | "ROTA" | "VEICULO" | "OUTROS";
 }
 
 interface MultiSelectComboboxProps {
@@ -64,7 +64,7 @@ export default function MultiSelectCombobox({
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full glass flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+        className={`w-full bg-[var(--card-bg)] flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
           isOpen ? "border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]" : "border-[var(--border)]"
         }`}
       >
@@ -98,7 +98,7 @@ export default function MultiSelectCombobox({
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 5 }}
-            className="absolute top-full left-0 right-0 mt-2 glass border border-[var(--border)] rounded-2xl shadow-2xl z-[1001] overflow-hidden flex flex-col max-h-[400px]"
+            className="absolute top-full left-0 right-0 mt-2 bg-[var(--card-bg)] border border-[var(--border)] rounded-2xl shadow-2xl z-[1001] overflow-hidden flex flex-col max-h-[400px]"
           >
             {/* Search Input */}
             <div className="p-3 border-b border-[var(--border)] bg-[var(--secondary)]/30">
@@ -124,7 +124,7 @@ export default function MultiSelectCombobox({
                 return (
                   <div key={cat} className="space-y-1">
                     <p className="px-3 text-[9px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2 sticky top-0 bg-[var(--card-bg)] py-1">
-                      {cat === "BASE" ? "Bases / Garagens" : cat === "ROTA" ? "Rotas Operativas" : "Outros"}
+                      {cat === "BASE" ? "Bases / Garagens" : cat === "ROTA" ? "Rotas Operativas" : cat === "VEICULO" ? "Veículos Táticos" : "Outros"}
                     </p>
                     <div className="space-y-0.5">
                       {catOptions.map((opt) => (

@@ -171,6 +171,10 @@ export default function TrackingPage() {
   }, []);
 
   const filterOptions = useMemo<FilterOption[]>(() => {
+    const vehicles = fleet
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map((v) => ({ label: v.id, value: v.id, category: "VEICULO" as const }));
+
     const routes = Array.from(new Set(fleet.map((v) => v.ROTANOME).filter(Boolean)))
       .sort()
       .map((r) => ({ label: r!, value: r!, category: "ROTA" as const }));
@@ -179,7 +183,7 @@ export default function TrackingPage() {
       .sort()
       .map((a) => ({ label: a!, value: a!, category: "BASE" as const }));
 
-    return [...areas, ...routes];
+    return [...areas, ...routes, ...vehicles];
   }, [fleet]);
 
   const filteredFleet = fleet.filter((v) => {
@@ -191,9 +195,10 @@ export default function TrackingPage() {
 
     const hasOccurrence = !!occurrences[v.id];
 
-    // Lógica de Filtro por Grupos (Rota ou Base)
+    // Lógica de Filtro por Grupos (Rota, Base ou Veículo Específico)
     const matchesFilter =
       selectedFilters.size === 0 ||
+      selectedFilters.has(v.id) ||
       (v.ROTANOME && selectedFilters.has(v.ROTANOME)) ||
       (v.AREANOME && selectedFilters.has(v.AREANOME));
 
