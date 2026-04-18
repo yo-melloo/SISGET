@@ -17,9 +17,8 @@ Automatizar os processos de trabalho (workflow) e rotinas administrativas dos au
 - Não há controle de acesso, histórico de alterações, nem sincronização entre plantões.
 - A comunicação extra-plantão depende de preenchimento manual e repasse verbal.
 
-**Histórico de Evolução Técnica:**
-- [x] **Governança**: Transição completa para **TDD-First** e implementação do sistema de **Rewinds** para memória técnica. (Branch: `chore/agents-tdd-rewinds-governance`)
-- [x] **Fleet Tracking**: Sincronização básica operacional.
+- [x] **Governança**: Transição completa para **TDD-First** e implementação do sistema de **Rewinds**. (Concluído)
+- [x] **Fleet Tracking v2.0**: Dashboard Tático, LockFocus, Fullscreen e Integração DNIT/MCR. (Entregue na main)
 
 **Premissa do Desenvolvedor:**
  O desenvolvedor é também colaborador na área de tráfego, com domínio das regras de negócio e capacidade de projetar as automações. O sistema será construído seguindo princípios de Código Limpo, SOLID, e desenvolvimento orientado a especificação (SDD) e testes (TDD).
