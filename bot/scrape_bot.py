@@ -1,42 +1,34 @@
 import os
 import asyncio
 import json
+import random
+import httpx
 from playwright.async_api import async_playwright
 from dotenv import load_dotenv
 
 load_dotenv()
 
-URL    = os.getenv("LIFE_URL", "https://lifeonline.com.br/sistemas_v2/index.php")
-EMPRESA = os.getenv("LIFE_COMPANY")
-USER   = os.getenv("LIFE_USER")
-PASS   = os.getenv("LIFE_PASS")
+# Configurações LifeWeb
+URL      = os.getenv("LIFE_URL", "https://lifeonline.com.br/sistemas_v2/index.php")
+EMPRESA  = os.getenv("LIFE_COMPANY")
+USER     = os.getenv("LIFE_USER")
+PASS     = os.getenv("LIFE_PASS")
+
+# Configurações Backend SISGET
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8080")
+API_KEY     = os.getenv("INTERNAL_API_KEY", "sisget-secret-123")
 
 if not all([EMPRESA, USER, PASS]):
     raise RuntimeError("Credenciais não configuradas no .env")
 
-
 def try_parse_fleet(body: str) -> list | None:
     """
-    Decodifica a resposta da frota em todos os formatos observados:
-
-    Caso 1 — JSON limpo (lista direta):
-        [{\"VEICCODIGO\": ...}, ...]
-
-    Caso 2 — Body com backslash-escaped quotes (formato real observado no 314KB):
-        [{\\\"VEICCODIGO\\\": \\\"MABC1235\\\", ...}]
-        → body é uma string onde cada \" virou \\\"
-        → basta trocar \\\" por \" e parsear
-
-    Caso 3 — Double-encoded (string JSON dentro de JSON):
-        \"[{\\\"VEICCODIGO\\\": ...}]\"
-        → json.loads returns uma string, que precisa de segundo parse
+    Decodifica a resposta da frota em todos os formatos observados.
     """
-    # ── Caso 1: parse direto ──
     try:
         data = json.loads(body)
         if isinstance(data, list) and len(data) > 10:
             return data
-        # Caso 3: a resposta é uma string JSON
         if isinstance(data, str):
             inner = json.loads(data)
             if isinstance(inner, list) and len(inner) > 10:
@@ -44,187 +36,184 @@ def try_parse_fleet(body: str) -> list | None:
     except (json.JSONDecodeError, TypeError):
         pass
 
-    # ── Caso 2: backslash-escaped (o mais comum no 314KB) ──
-    # O preview real mostrou: '[{\\\"VEICCODIGO\\\"' — cada " foi escapado com \"
-    # Fazemos a limpeza progressiva: \\\" → \" → parse
     candidate = body
     for step in range(3):
         try:
-            # Remove uma camada de escape
             candidate = candidate.replace('\\"', '"')
             data = json.loads(candidate)
             if isinstance(data, list) and len(data) > 10:
                 return data
         except (json.JSONDecodeError, ValueError):
             pass
-
     return None
 
+async def push_to_backend(fleet_data: list):
+    """
+    Mapeia os campos do LifeWeb para o SISGET e envia via POST.
+    """
+    mapped_data = []
+    for v in fleet_data:
+        try:
+            # Correção de Polaridade (Brasil: Lat < 0, Lng < 0)
+            lat = float(v.get("RASTLATITUDE", 0))
+            lng = float(v.get("RASTLONGITUDE", 0))
+            if lat > 0: lat *= -1
+            if lng > 0: lng *= -1
+            
+            speed = float(v.get("RASTVELOCIDADE", 0))
+            
+            mapped_data.append({
+                "vehicleId": str(v.get("VEICCODIGO") or v.get("VEICPREFIXO", "")),
+                "plate": v.get("VEICPLACA"),
+                "latitude": lat,
+                "longitude": lng,
+                "speed": speed,
+                "driverName": v.get("FUNCNOME"),
+                "routeName": v.get("ROTANOME"),
+                "areaName": v.get("AREANOME"),
+                "status": v.get("STATUS"),
+                "transmissionDate": v.get("RASTDATA"),
+                "odometer": str(v.get("VEICODOMETRO", "0")),
+                "fuelLevel": v.get("MED_VALOR"),
+                "category": v.get("VEICCATNOME"),
+                "rpm": str(v.get("RASTGIRO", "0"))
+            })
+        except (ValueError, TypeError):
+            continue
 
-async def run():
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{BACKEND_URL}/api/fleet/update-batch",
+                json=mapped_data,
+                headers={"X-Internal-Key": API_KEY},
+                timeout=30.0
+            )
+            if resp.status_code == 200:
+                print(f"[OK] Backend atualizado: {len(mapped_data)} veículos.")
+            else:
+                print(f"[ERROR] Falha no Backend ({resp.status_code}): {resp.text}")
+    except Exception as e:
+        print(f"[✗] Erro ao conectar no Backend: {e}")
+
+async def check_auto_status() -> bool:
+    """Consulta se o modo automático está ligado no backend"""
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{BACKEND_URL}/api/fleet/auto-status", timeout=5.0)
+            if resp.status_code == 200:
+                return resp.json().get("active", False)
+    except Exception:
+        pass
+    return False
+
+async def run_once():
+    """Executa um ciclo completo de raspagem"""
+    print("\n" + "="*50)
+    print(f"[*] INICIANDO CICLO DE RASTREAMENTO")
+    
     fleet_data: list | None = None
     fleet_size: int = 0
 
     async def on_response(response):
         nonlocal fleet_data, fleet_size
-
         url = response.url
-        # Só interessa o endpoint principal da API
-        if "lifeonline.com.br/sistemas_v2/index.php" not in url:
+        if "lifeonline.com.br/sistemas_v2/index.php" not in url or "InclueScript" in url:
             return
-        if "InclueScript" in url:
-            return
-
+        
         try:
             body = await response.text()
-        except Exception:
-            return
-
-        # ── Filtro rápido: só avança se o body contém campos de frota ──
-        if "VEICCODIGO" not in body:
-            return
-
-        # ── Critério de qualidade: queremos o payload MAIS RICO ──
-        # O payload com GPS (RASTLATITUDE) tem ~314KB e contém a frota completa.
-        # O payload sem GPS tem ~7KB e contém apenas veículos offline.
-        has_gps    = "RASTLATITUDE" in body
-        is_larger  = len(body) > fleet_size
-
-        if has_gps and is_larger:
-            result = try_parse_fleet(body)
-            if result and len(result) > fleet_size:
-                fleet_data = result
-                fleet_size = len(result)
-                gps_tag = "[GPS]" if has_gps else "[SEM-GPS]"
-                print(f"  [CAPTURADO{gps_tag}] {len(result)} veículos ({len(body):,} bytes)")
-
-        elif not fleet_data:
-            # Fallback: aceita mesmo sem GPS se ainda não temos nenhum dado
-            result = try_parse_fleet(body)
-            if result:
-                fleet_data = result
-                fleet_size = len(result)
-                print(f"  [CAPTURADO-FALLBACK] {len(result)} veículos ({len(body):,} bytes)")
-
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        ctx = await browser.new_context(
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/119.0.0.0 Safari/537.36"
-            )
-        )
-        page = await ctx.new_page()
-
-        # ── Login ──
-        print("[*] Login...")
-        await page.goto(URL, wait_until="networkidle")
-        await page.fill("#empresa", EMPRESA)
-        await page.fill("#login", USER)
-        await page.fill("#pass", PASS)
-        await page.click("#btnLogin")
-        await page.wait_for_load_state("networkidle")
-        print("[+] Login OK.")
-
-        # Ativa interceptação ANTES de navegar para a seção de rastreamento
-        page.on("response", on_response)
-
-        # ── Navegação para Rastreamento Online ──
-        print("[*] Navegando para rastreamento online...")
-        await page.evaluate(
-            "() => { const b = document.querySelector('button.cookie-btn') "
-            "|| [...document.querySelectorAll('button')].find(el => el.innerText.includes('Aceitar')); "
-            "if(b) b.click(); }"
-        )
-        await asyncio.sleep(1)
-
-        try:
-            await page.get_by_text("Acompanhamento").first.hover(timeout=5000)
-            await asyncio.sleep(1)
-            await page.get_by_text("Rastreamento").first.hover(timeout=5000)
-            await asyncio.sleep(1)
+            if "VEICCODIGO" not in body: return
+            
+            has_gps = "RASTLATITUDE" in body
+            if has_gps and len(body) > fleet_size:
+                result = try_parse_fleet(body)
+                if result:
+                    fleet_data = result
+                    fleet_size = len(result)
+                    print(f"  [CAPTURADO] {len(result)} veículos ({len(body)//1024} KB)")
         except Exception:
             pass
 
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        ctx = await browser.new_context()
+        page = await ctx.new_page()
+        page.on("response", on_response)
+
         try:
-            await page.locator("#ar-online").click(timeout=5000)
-        except Exception:
-            await page.evaluate(
-                "() => { const el = document.querySelector('#ar-online'); if(el) el.click(); }"
-            )
+            print("[*] Login LifeWeb...")
+            await page.goto(URL, wait_until="networkidle", timeout=60000)
+            await page.fill("#empresa", EMPRESA)
+            await page.fill("#login", USER)
+            await page.fill("#pass", PASS)
+            await page.click("#btnLogin")
+            await page.wait_for_load_state("networkidle")
 
-        # ── Aguarda carregamento ──
-        # O payload de 314KB chega depois que o mapa renderiza todos os marcadores.
-        # 5 segundos são suficientes para o JS moderno terminar as chamadas AJAX.
-        print("[*] Aguardando carregamento dos dados (5s)...")
-        await page.wait_for_load_state("networkidle")
-        await asyncio.sleep(5)
-
-        # ── Pós-processamento: se ainda não capturamos tudo, tenta extrair do DOM ──
-        if not fleet_data or fleet_size < 50:
-            print("[!] Poucos veículos capturados via rede. Tentando extração via JS...")
+            print("[*] Aceitando cookies e navegando...")
+            # Clica no botão azul "Aceitar"
             try:
+                await page.click("button:has-text('Aceitar')", timeout=5000)
+                await asyncio.sleep(1)
+            except Exception:
+                pass
+
+            # Tenta navegar via clique direto no ID para ser mais tático
+            print("[*] Abrindo mapa de rastreamento...")
+            try:
+                # O ar-online é o ID do link de rastreamento no menu
+                await page.evaluate("() => { const el = document.querySelector('#ar-online') || [...document.querySelectorAll('a')].find(a => a.innerText.includes('Rastreamento Online')); if(el) el.click(); }")
+            except Exception:
+                await page.goto("https://lifeonline.com.br/sistemas_v2/index.php?pag=ar-online", wait_until="networkidle")
+
+            print("[*] Aguardando dados (12s)...")
+            await asyncio.sleep(12) 
+
+            if not fleet_data:
+                print("[!] Tentando extração via DOM...")
                 js_data = await page.evaluate("""
                     () => {
-                        // O Life.RastreamentoOnline armazena os dados dos veículos
-                        // na variável dsVeiculos após o init()
-                        if (typeof Life !== 'undefined' &&
-                            Life.RastreamentoOnline &&
-                            typeof Life.RastreamentoOnline.getDsVeiculos === 'function') {
+                        if (typeof Life !== 'undefined' && Life.RastreamentoOnline && typeof Life.RastreamentoOnline.getDsVeiculos === 'function') {
                             return Life.RastreamentoOnline.getDsVeiculos();
                         }
-                        // Tenta acessar a variável privada diretamente
-                        if (typeof private !== 'undefined' && private.dsVeiculos) {
-                            return private.dsVeiculos;
-                        }
+                        if (typeof dsVeiculos !== 'undefined') return dsVeiculos;
                         return null;
                     }
                 """)
-                if js_data and isinstance(js_data, list) and len(js_data) > fleet_size:
+                if js_data: 
                     fleet_data = js_data
-                    fleet_size = len(js_data)
-                    print(f"  [DOM] {fleet_size} veículos extraídos via JS")
-            except Exception as e:
-                print(f"  [DOM] Falhou: {e}")
+                    print(f"  [DOM] {len(js_data)} veículos extraídos via JS")
 
-        # ── Salva resultado ──
-        if fleet_data:
-            # Correção de Polaridade (Brasil: Lat < 0, Lng < 0)
-            for v in fleet_data:
-                try:
-                    lat = float(v.get("RASTLATITUDE", 0))
-                    lng = float(v.get("RASTLONGITUDE", 0))
-                    # Se vierem positivas (comum em alguns exports mal formatados), invertemos
-                    if lat > 0: v["RASTLATITUDE"] = str(lat * -1)
-                    if lng > 0: v["RASTLONGITUDE"] = str(lng * -1)
-                except (ValueError, TypeError):
-                    continue
+            if fleet_data:
+                await push_to_backend(fleet_data)
+            else:
+                print("[-] Falha: Nenhum dado capturado. Verificando estado da página...")
+                await page.screenshot(path="bot_fail.png", full_page=True)
 
-            output_path = os.path.join(os.path.dirname(__file__), "fleet_status.json")
-            with open(output_path, "w", encoding="utf-8") as f:
-                json.dump(fleet_data, f, ensure_ascii=False, indent=2)
-            
-            # Exporta também como JS para evitar erros de CORS em visualização local
-            js_path = os.path.join(os.path.dirname(__file__), "fleet_data.js")
-            with open(js_path, "w", encoding="utf-8") as f:
-                f.write(f"window.fleetData = {json.dumps(fleet_data, ensure_ascii=False)};")
+        except Exception as e:
+            print(f"[!] Erro no ciclo: {e}")
+        finally:
+            await browser.close()
 
-            print(f"\n[+] SUCESSO: {fleet_size} veículos extraídos -> {output_path}")
-            print(f"[+] JS gerado para o Dashboard -> {js_path}")
-
-            sample = fleet_data[0]
-            has_gps_check = "RASTLATITUDE" in sample
-            print(f"[+] Campos disponíveis ({len(sample)} colunas)  |  GPS: {'SIM' if has_gps_check else 'NÃO'}")
-            for k, v in sample.items():
-                print(f"    {k}: {str(v)[:80]}")
-        else:
-            print("\n[-] FALHA: Nenhum JSON de frota capturado.")
-            print("    Verifique navegação, credenciais e se o site está respondendo.")
-
-        await page.screenshot(path="scrape_result.png", full_page=True)
-        await browser.close()
-
+async def main():
+    import sys
+    is_daemon = "--daemon" in sys.argv
+    
+    if is_daemon:
+        print("[*] MODO DAEMON ATIVADO (Monitorando Backend)")
+        while True:
+            is_active = await check_auto_status()
+            if is_active:
+                await run_once()
+                # Intervalo sugerido pelo usuário: 1:30 min - 2:00 min (90s - 120s)
+                wait_time = random.randint(90, 120)
+                print(f"[*] Ciclo finalizado. Aguardando {wait_time}s...")
+                await asyncio.sleep(wait_time)
+            else:
+                # Se desativado, checa novamente a cada 10s
+                await asyncio.sleep(10)
+    else:
+        await run_once()
 
 if __name__ == "__main__":
-    asyncio.run(run())
+    asyncio.run(main())

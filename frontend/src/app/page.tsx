@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { ShieldCheck, Bus, Key, User, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
