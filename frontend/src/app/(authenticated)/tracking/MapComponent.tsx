@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip, useMap } from "react-leaflet";
-import { Map as MapIcon, Satellite, Layers, CarFront, Moon, Sun, CloudMoon } from "lucide-react";
+import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip, useMap, useMapEvents } from "react-leaflet";
+import { Map as MapIcon, Satellite, Layers, CarFront, Moon, Sun, CloudMoon, Maximize, Minimize, LocateFixed } from "lucide-react";
 import "leaflet/dist/leaflet.css";
+import { toast } from "sonner";
 
 interface MapComponentProps {
   fleet: any[];
@@ -12,44 +13,65 @@ interface MapComponentProps {
   onSelectCar: (id: string) => void;
   theme?: string;
   customFocus?: [number, number] | null;
+  lockFocus?: boolean;
+  onToggleFullscreen?: () => void;
+  externalFullscreenState?: boolean;
+  isSidebarOpen?: boolean;
 }
 
 type MapView = 'standard' | 'satellite' | 'hybrid';
 
 // Componente helper para recarregar ou focar em carrinhos selecionados ou pontos customizados
-function FocusMap({ selectedCar, fleet, customFocus }: { selectedCar: string | null, fleet: any[], customFocus?: [number, number] | null }) {
+function FocusMap({ selectedCar, fleet, customFocus, lockFocus }: { selectedCar: string | null, fleet: any[], customFocus?: [number, number] | null, lockFocus?: boolean }) {
   const map = useMap();
   
   useEffect(() => {
-    if (!map) return;
-
     try {
-        if (selectedCar) {
-          const car = fleet.find(v => v.id === selectedCar);
-          if (car && car.lat && car.lng) {
-            map.flyTo([car.lat, car.lng], 15, { duration: 1.5 });
-            setTimeout(() => {
-                if (map) map.invalidateSize();
-            }, 600);
-          }
-        } else if (customFocus) {
-          map.flyTo(customFocus, 12, { duration: 2 });
+      if (!map) return;
+      
+      if (customFocus) {
+        map.flyTo(customFocus, 13, { duration: 1.5 });
+      } else if (selectedCar && lockFocus) {
+        const car = fleet.find(v => v.id === selectedCar);
+        if (car && car.lat && car.lng) {
+          map.flyTo([car.lat, car.lng], 15, { duration: 1.5 });
           setTimeout(() => {
-            if (map) map.invalidateSize();
+              if (map) map.invalidateSize();
           }, 600);
         }
+      }
     } catch (e) {
         console.warn("[MAP] Falha ao mover câmera: Mapa ainda não inicializado corretamente.");
     }
-  }, [selectedCar, fleet, customFocus, map]);
+  }, [selectedCar, fleet, customFocus, map, lockFocus]);
   
   return null;
 }
 
-export default function MapComponent({ fleet, occurrences, selectedCar, onSelectCar, theme, customFocus }: MapComponentProps) {
+export default function MapComponent({ 
+  fleet, 
+  occurrences, 
+  selectedCar, 
+  onSelectCar, 
+  theme, 
+  customFocus, 
+  lockFocus, 
+  onToggleFullscreen, 
+  externalFullscreenState,
+  isSidebarOpen 
+}: MapComponentProps) {
   const mapRef = useRef<any>(null);
   const [mapView, setMapView] = useState<MapView | 'dark'>('standard');
   const [showTraffic, setShowTraffic] = useState(false);
+  const [centerClickCount, setCenterClickCount] = useState(0);
+
+  // Re-validar tamanho do mapa quando a sidebar mudar
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (mapRef.current) mapRef.current.invalidateSize();
+    }, 550); // Ligeiramente após o término da animação de 500ms
+    return () => clearTimeout(timer);
+  }, [isSidebarOpen]);
 
   // Tile layers - Profissionais para Rastreamento
   const roadMapTile = "https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png"; // OpenStreetMap.DE (Foco em Vias)
@@ -61,19 +83,77 @@ export default function MapComponent({ fleet, occurrences, selectedCar, onSelect
     delete (window as any).L?.Icon?.Default?.prototype?._getIconUrl;
   }, []);
 
+  const toggleFullscreen = () => {
+     if (onToggleFullscreen) {
+        onToggleFullscreen();
+     }
+  };
+
+  // Helper para detectar movimento manual do usuário no mapa e resetar o ciclo de foco
+  const MapEvents = () => {
+    useMapEvents({
+      dragstart: () => setCenterClickCount(0),
+      zoomstart: () => setCenterClickCount(0)
+    });
+    return null;
+  };
+
+  const handleCenterAction = () => {
+     const map = mapRef.current;
+     if (!map) return;
+
+     if (centerClickCount === 0) {
+        // Passo 1: Focar na visão global (Frota)
+        map.flyTo([-15.7942, -47.8822], 5, { duration: 1.5 });
+        toast.info("Mapa centralizado na visão global");
+        setCenterClickCount(1);
+     } else {
+        // Passo 2: Focar no Dispositivo (GPS) - Mantém estado 1 para permitir refresh contínuo
+        if (!navigator.geolocation) {
+           toast.error("Geolocalização não suportada no seu navegador");
+           return;
+        }
+        
+        toast.promise(
+          new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                map.flyTo([pos.coords.latitude, pos.coords.longitude], 13, { duration: 2 });
+                resolve(true);
+              },
+              (err) => reject(err),
+              { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
+            );
+          }),
+          {
+            loading: 'Localizando seu dispositivo...',
+            success: 'Localização atualizada!',
+            error: 'Serviço de localização lento ou indisponível.'
+          }
+        );
+     }
+  };
+
   return (
     <div className={`w-full h-full relative z-0 ${mapView === 'dark' ? 'night-mode' : ''}`}>
       <MapContainer
-        key={`map-v2-${mapView}`} // Removido theme da key para evitar flashes agressivos, mantendo apenas o tipo de mapa para reset seguro
         center={[-15.7942, -47.8822]}
         zoom={5}
         style={{ height: "100%", width: "100%", backgroundColor: theme === 'dark' ? "#1a1a1a" : "#f1f5f9" }}
         ref={mapRef}
         zoomControl={false}
         attributionControl={false}
+        preferCanvas={true}
       >
         <TileLayer
           url={mapView === 'satellite' || mapView === 'hybrid' ? satelliteTile : roadMapTile}
+          eventHandlers={{
+            tileerror: () => {
+              toast.error("Erro ao carregar blocos do mapa. Tente alternar o estilo (Satélite/Padrão) ou verifique sua conexão.", {
+                id: 'tile-error' // Evita spam de toasts se muitos tiles falharem
+              });
+            }
+          }}
         />
         {mapView === 'hybrid' && (
           <TileLayer url={hybridLabels} opacity={0.9} />
@@ -82,7 +162,8 @@ export default function MapComponent({ fleet, occurrences, selectedCar, onSelect
           <TileLayer url={trafficTile} opacity={0.7} />
         )}
 
-        <FocusMap selectedCar={selectedCar} fleet={fleet} customFocus={customFocus} />
+        <FocusMap selectedCar={selectedCar} fleet={fleet} customFocus={customFocus} lockFocus={lockFocus} />
+        <MapEvents />
 
         {fleet.map(v => {
           const hasNote = !!occurrences[v.id];
@@ -184,6 +265,28 @@ export default function MapComponent({ fleet, occurrences, selectedCar, onSelect
         >
           <CarFront className="w-5 h-5" />
           <span className={`absolute left-14 bg-black/80 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none uppercase tracking-widest whitespace-nowrap`}>Trânsito: {showTraffic ? 'ON' : 'OFF'}</span>
+        </button>
+
+        <button 
+          onClick={toggleFullscreen}
+          className="w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-xl group bg-[var(--card-bg)] text-[var(--foreground-muted)] hover:text-blue-500 hover:bg-[var(--secondary)]"
+          title={externalFullscreenState ? "Sair da Tela Cheia" : "Tela Cheia"}
+        >
+          {externalFullscreenState ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+          <span className="absolute left-14 bg-black/80 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none uppercase tracking-widest">
+            {externalFullscreenState ? 'Recolher' : 'Tela Cheia'}
+          </span>
+        </button>
+
+        <button 
+          onClick={handleCenterAction}
+          className="w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-xl group bg-[var(--card-bg)] text-[var(--foreground-muted)] hover:text-emerald-500 hover:bg-[var(--secondary)]"
+          title="Centralizar Mapa"
+        >
+          <LocateFixed className={`w-5 h-5 ${centerClickCount === 1 ? 'text-emerald-500' : ''}`} />
+          <span className="absolute left-14 bg-black/80 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none uppercase tracking-widest">
+            {centerClickCount === 0 ? 'Focar Frota' : 'Focar Meu Local'}
+          </span>
         </button>
       </div>
     </div>

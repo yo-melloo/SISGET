@@ -110,7 +110,7 @@ export default function MultiSelectCombobox({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Pesquisar..."
-                  className="bg-transparent border-none outline-none text-xs w-full text-white placeholder:text-muted"
+                  className="bg-transparent border-none outline-none text-xs w-full text-[var(--foreground)] placeholder:text-[var(--foreground-muted)]/50"
                 />
               </div>
             </div>
@@ -124,14 +124,14 @@ export default function MultiSelectCombobox({
                 return (
                   <div key={cat} className="space-y-1">
                     <p className="px-3 text-[9px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2 sticky top-0 bg-[var(--card-bg)] py-1">
-                      {cat === "BASE" ? "Bases / Garagens" : cat === "ROTA" ? "Rotas Operativas" : cat === "VEICULO" ? "Veículos Táticos" : "Outros"}
+                      {cat === "BASE" ? "Bases / Garagens" : cat === "ROTA" ? "Rotas Operativas" : cat === "VEICULO" ? "Veículos (prefixos)" : "Outros"}
                     </p>
                     <div className="space-y-0.5">
                       {catOptions.map((opt) => (
                         <div
                           key={opt.value}
                           onClick={() => toggleOption(opt.value)}
-                          className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 cursor-pointer transition-colors group"
+                          className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[var(--secondary)] cursor-pointer transition-colors group"
                         >
                           <div className="flex items-center gap-3 overflow-hidden">
                             <div
@@ -147,7 +147,7 @@ export default function MultiSelectCombobox({
                             </div>
                             <span
                               className={`text-xs font-bold leading-none truncate ${
-                                selected.has(opt.value) ? "text-white" : "text-muted group-hover:text-white"
+                                selected.has(opt.value) ? "text-blue-500" : "text-[var(--foreground-muted)] group-hover:text-[var(--foreground)]"
                               }`}
                             >
                               {opt.label}

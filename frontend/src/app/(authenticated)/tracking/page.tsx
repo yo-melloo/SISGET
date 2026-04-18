@@ -2,9 +2,10 @@
 
 import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
-import { Search, Loader2, X, RefreshCw, Bell, MapPin, Filter } from "lucide-react";
+import { Search, Loader2, X, RefreshCw, Bell, MapPin, Filter, LocateFixed, ChevronLeft, ChevronRight } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
+import { toast } from "sonner";
 import MultiSelectCombobox, { FilterOption } from "./MultiSelectCombobox";
 
 // Disable SSR for React-Leaflet
@@ -50,6 +51,38 @@ export default function TrackingPage() {
   const [lastSync, setLastSync] = useState<string>("--:--:--");
   const [showStreetView, setShowStreetView] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState<Set<string>>(new Set());
+  const [lockFocus, setLockFocus] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Persistência de Filtros: Carregamento Inicial (Sessão)
+  useEffect(() => {
+    const saved = localStorage.getItem('sisget_tracking_filters');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSelectedFilters(new Set(parsed));
+          setTimeout(() => {
+            toast.success("Sessão Restaurada", { 
+              description: "Continuando de onde você parou.",
+              icon: "🔄"
+            });
+          }, 1000);
+        }
+      } catch (e) {
+        console.error("[STORAGE] Erro ao restaurar filtros:", e);
+      }
+    }
+  }, []);
+
+  // Persistência de Filtros: Salvamento Automático
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem('sisget_tracking_filters', JSON.stringify(Array.from(selectedFilters)));
+    }
+  }, [selectedFilters, mounted]);
 
   const BACKEND_URL = "http://localhost:8080"; 
 
@@ -255,7 +288,30 @@ export default function TrackingPage() {
     });
   };
 
-  const selectedVehicle = fleet.find((v) => v.id === selectedCar);
+  const toggleFullscreen = () => {
+    if (!containerRef.current) return;
+    
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().catch(() => {
+        console.error("Falha ao entrar em tela cheia");
+      });
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handleFsChange);
+    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+  }, []);
+
+  const selectedVehicle = useMemo(() => 
+    fleet.find(v => v.id === selectedCar), 
+    [fleet, selectedCar]
+  );
 
   if (!mounted) return (
     <div className="flex items-center justify-center h-screen bg-[var(--background)]">
@@ -264,10 +320,25 @@ export default function TrackingPage() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-150px)] overflow-hidden rounded-2xl border border-[var(--border)] relative bg-[var(--background)] shadow-2xl">
-      {/* Sidebar List */}
-      <div className="w-[380px] h-full bg-[var(--card-bg)] border-r border-[var(--border)] flex flex-col z-10 shrink-0">
-        <div className="p-5 bg-gradient-to-r from-blue-600 to-blue-500 text-white flex justify-between items-center">
+    <div ref={containerRef} className="flex h-[calc(100vh-150px)] overflow-hidden rounded-2xl border border-[var(--border)] relative bg-[var(--background)] shadow-2xl transition-all duration-500">
+      
+      {/* Toggle Button - Fixado na Borda (Independente da Sidebar) */}
+      <button
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className={`absolute top-1/2 transform -translate-y-1/2 w-8 h-12 bg-[var(--card-bg)] border border-[var(--border)] rounded-r-xl z-50 flex items-center justify-center hover:bg-[var(--secondary)] transition-all duration-500 shadow-xl`}
+        style={{ left: isSidebarOpen ? '379px' : '0' }}
+        title={isSidebarOpen ? "Recolher Lista" : "Expandir Lista"}
+      >
+        {isSidebarOpen ? <ChevronLeft className="w-5 h-5 text-blue-500" /> : <ChevronRight className="w-5 h-5 text-blue-500" />}
+      </button>
+
+      {/* Sidebar List - Colapsável */}
+      <div 
+        className={`h-full bg-[var(--card-bg)] border-r border-[var(--border)] flex flex-col z-10 shrink-0 transition-all duration-500 ease-in-out relative ${
+          isSidebarOpen ? "w-[380px]" : "w-0 overflow-hidden border-none"
+        }`}
+      >
+        <div className="p-5 bg-gradient-to-r from-blue-600 to-blue-500 text-white flex justify-between items-center whitespace-nowrap overflow-hidden">
           <div>
             <h1 className="text-sm font-black uppercase tracking-[0.2em] mb-1" style={{fontFamily: 'var(--font-outfit)'}}>SISGET <span className="opacity-70">FROTA</span></h1>
             <div className="flex items-center gap-1.5 opacity-60">
@@ -404,6 +475,10 @@ export default function TrackingPage() {
           }}
           theme={theme}
           customFocus={customFocus}
+          lockFocus={lockFocus}
+          onToggleFullscreen={toggleFullscreen}
+          externalFullscreenState={isFullscreen}
+          isSidebarOpen={isSidebarOpen}
         />
 
         {/* Detail Panel - Right Sidebar Overlay */}
@@ -417,9 +492,18 @@ export default function TrackingPage() {
                    </h3>
                    <p className="text-[10px] font-black uppercase text-[var(--foreground-muted)] tracking-widest">{selectedVehicle?.VEICPLACA} • {selectedVehicle?.VEICCATNOME}</p>
                 </div>
-                <button onClick={() => setSelectedCar(null)} className="p-2 hover:bg-[var(--secondary)] rounded-full transition-colors">
-                  <X className="w-5 h-5 text-[var(--foreground-muted)]" />
-                </button>
+                 <div className="flex items-center gap-2">
+                   <button 
+                     onClick={() => setLockFocus(!lockFocus)}
+                     className={`p-2 rounded-full transition-all ${lockFocus ? 'bg-blue-500/10 text-blue-500 shadow-inner' : 'hover:bg-[var(--secondary)] text-[var(--foreground-muted)]'}`}
+                     title={lockFocus ? "Escolta Ativa: O mapa seguirá este carro" : "Escolta Desativada: Explore o mapa livremente"}
+                   >
+                     <LocateFixed className={`w-5 h-5 ${lockFocus ? 'animate-pulse text-blue-600' : ''}`} />
+                   </button>
+                   <button onClick={() => setSelectedCar(null)} className="p-2 hover:bg-[var(--secondary)] rounded-full transition-colors">
+                     <X className="w-5 h-5 text-[var(--foreground-muted)]" />
+                   </button>
+                 </div>
               </div>
 
               <div className="space-y-4 pr-2">
@@ -536,14 +620,17 @@ export default function TrackingPage() {
                     src={`https://www.google.com/maps/embed/v1/streetview?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'NOT_SET'}&location=${selectedVehicle.lat},${selectedVehicle.lng}`}
                  />
                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-                    <span className="text-white text-[10px] font-black uppercase tracking-[1em]">Ambiente Tático</span>
+                    <span className="text-white text-[10px] font-black uppercase tracking-[1em]">SISGET • Localização Geográfica</span>
                  </div>
-                 {/* Alerta se a chave não estiver configurada */}
-                 <div className="absolute bottom-4 left-4 right-4 p-4 bg-red-500/20 border border-red-500/30 backdrop-blur-md rounded-xl text-center">
-                    <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest">
-                       Nota: Google Maps API Key necessária para renderização via Embed. Fallback: <a href={`https://www.google.com/maps?q&layer=c&cbll=${selectedVehicle.lat},${selectedVehicle.lng}`} target="_blank" className="underline">Abrir Externamente</a>
-                    </p>
-                 </div>
+                 
+                 {/* Alerta de Fallback: Só aparece se a chave do Google não estiver configurada no .env */}
+                 {(!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY === 'NOT_SET') && (
+                   <div className="absolute bottom-4 left-4 right-4 p-4 bg-red-500/20 border border-red-500/30 backdrop-blur-md rounded-xl text-center animate-in slide-in-from-bottom-5">
+                      <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest">
+                         Google Maps API Key não detectada. Fallback: <a href={`https://www.google.com/maps?q&layer=c&cbll=${selectedVehicle.lat},${selectedVehicle.lng}`} target="_blank" className="underline font-black">Abrir em Nova Aba</a>
+                      </p>
+                   </div>
+                 )}
               </div>
            </div>
         </div>
