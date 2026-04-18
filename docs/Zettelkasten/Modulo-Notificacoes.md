@@ -17,10 +17,7 @@ O módulo de notificações do SISGET WEB atua como o sistema nervoso central do
 
 ## Integrações Futuras
 - **WebSockets:** Implementar para que alertas de tanques (vazão/consumo) apareçam instantaneamente para todos os auxiliares logados.
-<<<<<<< HEAD:docs/Zettelkasten/Modulo-Notificacoes.md
 - **Push API:** Avaliar para alertas críticos de segurança (RAVs) mesmo com aba fechada.
-=======
->>>>>>> 31b01da (feat: centralize Satélite Norte project and SISGET into root repository):Satélite Norte/docs/Zettelkasten/Modulo-Notificacoes.md
 
 ---
 **Tags:** #UX #UI #Notifications #AlertSystem

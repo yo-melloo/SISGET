@@ -1,5 +1,4 @@
 import os
-<<<<<<< HEAD:sisget/bot/scrape_bot.py
 import asyncio
 import json
 from playwright.async_api import async_playwright
@@ -30,7 +29,7 @@ def try_parse_fleet(body: str) -> list | None:
 
     Caso 3 — Double-encoded (string JSON dentro de JSON):
         \"[{\\\"VEICCODIGO\\\": ...}]\"
-        → json.loads retorna uma string, que precisa de segundo parse
+        → json.loads returns uma string, que precisa de segundo parse
     """
     # ── Caso 1: parse direto ──
     try:
@@ -229,94 +228,3 @@ async def run():
 
 if __name__ == "__main__":
     asyncio.run(run())
-=======
-import json
-import requests
-from dotenv import load_dotenv
-
-# Carrega ambiente
-bot_dir = os.path.dirname(__file__)
-env_path = os.path.join(bot_dir, ".env")
-load_dotenv(env_path)
-
-URL = os.getenv("LIFE_URL", "https://lifeonline.com.br/sistemas_v2/index.php")
-EMPRESA = os.getenv("LIFE_COMPANY")
-USER = os.getenv("LIFE_USER")
-PASS = os.getenv("LIFE_PASS")
-
-def scrape():
-    if not all([EMPRESA, USER, PASS]):
-        print("[-] Erro: Credenciais não configuradas no .env")
-        return
-
-    session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest"
-    })
-
-    try:
-        print("[*] Autenticando...")
-        login_payload = {
-            "EMPRESA": EMPRESA,
-            "LOGIN": USER,
-            "PASS": PASS,
-            "CAPTCHARESP": "",
-            "OpenFile": "c_login.php",
-            "winMode": "F"
-        }
-        
-        res_login = session.post(URL, data=login_payload, timeout=10)
-        if '"success": "T"' not in res_login.text:
-            print(f"[-] Falha no login: {res_login.text}")
-            return
-
-        print("[*] Coletando dados da frota (ds_rastreamentoOnline)...")
-        data_payload = {
-            "OpenFile": "ds_rastreamentoOnline.php",
-            "winMode": "F"
-        }
-        
-        res_data = session.post(URL, data=data_payload, timeout=30)
-        body = res_data.text
-
-        if "VEICCODIGO" not in body:
-            print("[-] Erro: JSON de frota não encontrado na resposta.")
-            return
-
-        # Limpeza do JSON (o Life escapa aspas com \\")
-        clean_body = body.replace('\\"', '"')
-        # Às vezes o JSON vem envolto em aspas extras
-        if clean_body.startswith('"') and clean_body.endswith('"'):
-            clean_body = clean_body[1:-1]
-            
-        fleet_data = json.loads(clean_body)
-        
-        # Correção de Polaridade (Lat/Lng negativas para o Brasil)
-        for v in fleet_data:
-            try:
-                lat = float(v.get("RASTLATITUDE", 0))
-                lng = float(v.get("RASTLONGITUDE", 0))
-                if lat > 0: v["RASTLATITUDE"] = str(lat * -1)
-                if lng > 0: v["RASTLONGITUDE"] = str(lng * -1)
-            except:
-                continue
-
-        # Salva resultados
-        status_path = os.path.join(bot_dir, "fleet_status.json")
-        js_path = os.path.join(bot_dir, "fleet_data.js")
-        
-        with open(status_path, "w", encoding="utf-8") as f:
-            json.dump(fleet_data, f, ensure_ascii=False, indent=2)
-            
-        with open(js_path, "w", encoding="utf-8") as f:
-            f.write(f"window.fleetData = {json.dumps(fleet_data, ensure_ascii=False)};")
-
-        print(f"[+] SUCESSO: {len(fleet_data)} veículos extraídos em tempo recorde.")
-        
-    except Exception as e:
-        print(f"[-] Erro crítico no scraper: {e}")
-
-if __name__ == "__main__":
-    scrape()
->>>>>>> 31b01da (feat: centralize Satélite Norte project and SISGET into root repository):Satélite Norte/sisget/bot/scrape_bot.py

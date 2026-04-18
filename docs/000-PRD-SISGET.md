@@ -101,11 +101,7 @@ Três tabelas lado a lado representando as bases: **Imperatriz**, **São Luís**
 | DESTINO | Cidade (UF) |
 
 - Linhas "CANCELADO" em destaque visual (fundo vermelho).
-<<<<<<< HEAD:docs/000-PRD-SISGET.md
-- **Rodapé resumo (por base):** CARRO RESERVA (verde), GRADE FUTURA (amarelo), INDISPONÍVEL (vermelho).
-=======
 - **Rodapé resumo (por base):** CARRO RESERVA (verde), GRADE FUTURA (amarelo), INDISPONÍVEL (vermelho), cada rótulo sendo editável para informar quais são os carros.
->>>>>>> 31b01da (feat: centralize Satélite Norte project and SISGET into root repository):Satélite Norte/docs/000-PRD-SISGET.md
 
 #### 4.3.2 Operação de Frota (Diurna / Noturna)
 Duas tabelas idênticas em estrutura, separadas por turno.

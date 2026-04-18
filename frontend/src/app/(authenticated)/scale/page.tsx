@@ -16,10 +16,7 @@ import {
   Plus
 } from "lucide-react";
 import { motion } from "framer-motion";
-<<<<<<< HEAD:sisget/frontend/src/app/(authenticated)/scale/page.tsx
-=======
-const MotionRow = motion.tr as unknown as any;
->>>>>>> 31b01da (feat: centralize Satélite Norte project and SISGET into root repository):Satélite Norte/sisget/frontend/src/app/(authenticated)/scale/page.tsx
+
 import * as XLSX from "xlsx";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -303,11 +300,8 @@ export default function ScalePage() {
             <tbody className="divide-y divide-[var(--border)]">
               {filteredEscala.length > 0 ? (
                 filteredEscala.map((item, idx) => (
-<<<<<<< HEAD:sisget/frontend/src/app/(authenticated)/scale/page.tsx
                   <motion.tr 
-=======
-                  <MotionRow 
->>>>>>> 31b01da (feat: centralize Satélite Norte project and SISGET into root repository):Satélite Norte/sisget/frontend/src/app/(authenticated)/scale/page.tsx
+
                     key={item.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -369,11 +363,8 @@ export default function ScalePage() {
                         {item.servico}
                       </span>
                     </td>
-<<<<<<< HEAD:sisget/frontend/src/app/(authenticated)/scale/page.tsx
                   </motion.tr>
-=======
-                  </MotionRow>
->>>>>>> 31b01da (feat: centralize Satélite Norte project and SISGET into root repository):Satélite Norte/sisget/frontend/src/app/(authenticated)/scale/page.tsx
+
                 ))
               ) : (
                 <tr>

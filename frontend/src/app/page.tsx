@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-<<<<<<< HEAD:sisget/frontend/src/app/page.tsx
 import { motion } from "framer-motion";
-=======
-import { motion } from "motion/react";
->>>>>>> 31b01da (feat: centralize Satélite Norte project and SISGET into root repository):Satélite Norte/sisget/frontend/src/app/page.tsx
 import { ShieldCheck, Bus, Key, User, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
