@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip, useMap } from "react-leaflet";
-import { Map as MapIcon, Satellite, Layers, CarFront, Moon, Sun } from "lucide-react";
+import { Map as MapIcon, Satellite, Layers, CarFront, Moon, Sun, CloudMoon } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 
 interface MapComponentProps {
@@ -19,16 +19,30 @@ type MapView = 'standard' | 'satellite' | 'hybrid';
 // Componente helper para recarregar ou focar em carrinhos selecionados ou pontos customizados
 function FocusMap({ selectedCar, fleet, customFocus }: { selectedCar: string | null, fleet: any[], customFocus?: [number, number] | null }) {
   const map = useMap();
+  
   useEffect(() => {
-    if (selectedCar) {
-      const car = fleet.find(v => v.id === selectedCar);
-      if (car && car.lat && car.lng) {
-        map.flyTo([car.lat, car.lng], 15, { duration: 1.5 });
-      }
-    } else if (customFocus) {
-      map.flyTo(customFocus, 12, { duration: 2 });
+    if (!map) return;
+
+    try {
+        if (selectedCar) {
+          const car = fleet.find(v => v.id === selectedCar);
+          if (car && car.lat && car.lng) {
+            map.flyTo([car.lat, car.lng], 15, { duration: 1.5 });
+            setTimeout(() => {
+                if (map) map.invalidateSize();
+            }, 600);
+          }
+        } else if (customFocus) {
+          map.flyTo(customFocus, 12, { duration: 2 });
+          setTimeout(() => {
+            if (map) map.invalidateSize();
+          }, 600);
+        }
+    } catch (e) {
+        console.warn("[MAP] Falha ao mover câmera: Mapa ainda não inicializado corretamente.");
     }
   }, [selectedCar, fleet, customFocus, map]);
+  
   return null;
 }
 
@@ -38,19 +52,19 @@ export default function MapComponent({ fleet, occurrences, selectedCar, onSelect
   const [showTraffic, setShowTraffic] = useState(false);
 
   // Tile layers - Profissionais para Rastreamento
-  const roadMapTile = "https://mt1.google.com/vt?lyrs=m&x={x}&y={y}&z={z}"; // Google Roadmap (Foco em Vias)
+  const roadMapTile = "https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png"; // OpenStreetMap.DE (Foco em Vias)
   const satelliteTile = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
-  const hybridLabels = "https://mt1.google.com/vt?lyrs=h&x={x}&y={y}&z={z}"; // Google Labels (Híbrido)
+  const hybridLabels = "https://mt1.google.com/vt?lyrs=h&x={x}&y={y}&z={z}"; // Google Labels (Híbrido - Mantido para legibilidade)
   const trafficTile = "https://mt1.google.com/vt?lyrs=h@159000000,traffic|seconds_into_week:-1&style=3&x={x}&y={y}&z={z}";
-  const darkTile = "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png";
 
   useEffect(() => {
     delete (window as any).L?.Icon?.Default?.prototype?._getIconUrl;
   }, []);
 
   return (
-    <div className="w-full h-full relative z-0">
+    <div className={`w-full h-full relative z-0 ${mapView === 'dark' ? 'night-mode' : ''}`}>
       <MapContainer
+        key={`map-v2-${mapView}`} // Removido theme da key para evitar flashes agressivos, mantendo apenas o tipo de mapa para reset seguro
         center={[-15.7942, -47.8822]}
         zoom={5}
         style={{ height: "100%", width: "100%", backgroundColor: theme === 'dark' ? "#1a1a1a" : "#f1f5f9" }}
@@ -59,10 +73,7 @@ export default function MapComponent({ fleet, occurrences, selectedCar, onSelect
         attributionControl={false}
       >
         <TileLayer
-          url={
-            mapView === 'satellite' || mapView === 'hybrid' ? satelliteTile : 
-            mapView === 'dark' ? darkTile : roadMapTile
-          }
+          url={mapView === 'satellite' || mapView === 'hybrid' ? satelliteTile : roadMapTile}
         />
         {mapView === 'hybrid' && (
           <TileLayer url={hybridLabels} opacity={0.9} />
@@ -81,7 +92,7 @@ export default function MapComponent({ fleet, occurrences, selectedCar, onSelect
 
           return (
             <CircleMarker
-              key={v.id}
+              key={`car-${v.id}-${isSelected}`}
               center={[v.lat, v.lng]}
               radius={isSelected ? 10 : 7}
               pathOptions={{
@@ -138,12 +149,12 @@ export default function MapComponent({ fleet, occurrences, selectedCar, onSelect
       <div className="absolute top-6 left-6 flex flex-col gap-2 z-[1000]">
         <button 
           onClick={() => setMapView(mapView === 'dark' ? 'standard' : 'dark')}
-          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-xl group bg-[var(--card-bg)] text-[var(--foreground-muted)] hover:text-blue-500 hover:bg-[var(--secondary)]`}
-          title={mapView === 'dark' ? "Ativar Modo Claro" : "Ativar Modo Escuro"}
+          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-xl group bg-[var(--card-bg)] text-[var(--foreground-muted)] hover:text-blue-500 hover:bg-[var(--secondary)] ${mapView === 'dark' ? 'ring-2 ring-blue-500' : ''}`}
+          title={mapView === 'dark' ? "Desativar Modo Noturno" : "Ativar Modo Noturno"}
         >
-          {mapView === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          {mapView === 'dark' ? <CloudMoon className="w-5 h-5 text-blue-500" /> : <Moon className="w-5 h-5" />}
           <span className="absolute left-14 bg-black/80 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none uppercase tracking-widest whitespace-nowrap">
-            Trocar Tema
+            Modo Noturno: {mapView === 'dark' ? 'ON' : 'OFF'}
           </span>
         </button>
 

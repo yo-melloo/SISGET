@@ -2,8 +2,10 @@
 
 import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
-import { Search, Loader2, X, RefreshCw, Bell, MapPin } from "lucide-react";
+import { Search, Loader2, X, RefreshCw, Bell, MapPin, Filter } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useMemo } from "react";
+import MultiSelectCombobox, { FilterOption } from "./MultiSelectCombobox";
 
 // Disable SSR for React-Leaflet
 const MapComponent = dynamic(() => import("./MapComponent"), {
@@ -31,6 +33,7 @@ interface FleetVehicle {
   MED_VALOR?: string;
   VEICCATNOME?: string;
   RASTGIRO?: string;
+  dnitMcr?: string;
 }
 
 export default function TrackingPage() {
@@ -44,21 +47,31 @@ export default function TrackingPage() {
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [customFocus, setCustomFocus] = useState<[number, number] | null>(null);
+  const [lastSync, setLastSync] = useState<string>("--:--:--");
+  const [showStreetView, setShowStreetView] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState<Set<string>>(new Set());
 
-  const BACKEND_URL = "http://localhost:8080"; // Em prod, usar variável de ambiente
+  const BACKEND_URL = "http://localhost:8080"; 
+
+  const fetchSyncInfo = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/fleet/sync-info`);
+      const data = await res.json();
+      if (data.lastSync) setLastSync(data.lastSync);
+    } catch (e) {
+      console.error("[SYNC] Falha ao obter info de sincronia:", e);
+    }
+  };
 
   const loadFleet = async () => {
     try {
       const res = await fetch(`${BACKEND_URL}/api/fleet/latest`);
-      const data = await res.json();
+      const body = await res.json();
       
-      if (!Array.isArray(data)) {
-        console.warn("Backend não retornou uma lista de frota:", data);
-        setFleet([]);
-        return;
-      }
+      const fleetData = body.fleet || [];
+      if (body.lastSync) setLastSync(body.lastSync);
 
-      const parsed = data.map((v: any) => ({
+      const parsed = fleetData.map((v: any) => ({
         id: v.vehicleId,
         lat: v.latitude,
         lng: v.longitude,
@@ -72,7 +85,8 @@ export default function TrackingPage() {
         VEICODOMETRO: v.odometer,
         MED_VALOR: v.fuelLevel,
         VEICCATNOME: v.category,
-        RASTGIRO: v.rpm
+        RASTGIRO: v.rpm,
+        dnitMcr: v.dnitMcr
       })).filter((v: FleetVehicle) => !isNaN(v.lat) && !isNaN(v.lng));
       setFleet(parsed);
     } catch (e) {
@@ -121,18 +135,24 @@ export default function TrackingPage() {
   };
 
   const handleManualRefresh = async () => {
+    console.log("[REFRESH] Iniciando sincronização manual...");
     setIsRefreshing(true);
     try {
-        // Dispara o bot (Scraper) - O bot vai enviar as coordenadas para o Spring Boot
-        await fetch("/api/fleet/refresh", { method: 'POST' });
+        const start = Date.now();
+        const res = await fetch("/api/fleet/refresh", { method: 'POST' });
+        const result = await res.json();
         
-        // Aguarda um pouco para o bot processar (ou apenas recarrega os dados atuais)
+        const duration = ((Date.now() - start) / 1000).toFixed(1);
+        console.log(`[REFRESH] Bot finalizado em ${duration}s:`, result);
+        
         await loadFleet();
+        await fetchSyncInfo();
         await fetchOccurrences();
     } catch (e) {
-      console.error("Falha ao disparar sincronização:", e);
+      console.error("[REFRESH] Erro durante o processo:", e);
     } finally {
       setIsRefreshing(false);
+      console.log("[REFRESH] Lock de interface liberado.");
     }
   };
 
@@ -140,41 +160,44 @@ export default function TrackingPage() {
     setMounted(true);
     fetchOccurrences();
     loadFleet();
-    fetchAutoStatus();
+    fetchOccurrences();
+    fetchSyncInfo();
+
     const interval = setInterval(() => {
         loadFleet();
+        fetchSyncInfo();
     }, 5000); 
     return () => clearInterval(interval);
   }, []);
 
-  const handleSaveOccurrence = (id: string, text: string) => {
-    if (!text.trim()) return;
-    fetch("/api/fleet/occurrences", {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ vehicleId: id, occurrenceText: text })
-    }).then(() => {
-      setOccurrences(prev => ({ ...prev, [id]: text }));
-    });
-  };
+  const filterOptions = useMemo<FilterOption[]>(() => {
+    const routes = Array.from(new Set(fleet.map((v) => v.ROTANOME).filter(Boolean)))
+      .sort()
+      .map((r) => ({ label: r!, value: r!, category: "ROTA" as const }));
 
-  const handleRemoveOccurrence = (id: string) => {
-    fetch(`/api/fleet/occurrences?id=${id}`, { method: 'DELETE' })
-      .then(() => {
-        const next = { ...occurrences };
-        delete next[id];
-        setOccurrences(next);
-      });
-  };
+    const areas = Array.from(new Set(fleet.map((v) => v.AREANOME).filter(Boolean)))
+      .sort()
+      .map((a) => ({ label: a!, value: a!, category: "BASE" as const }));
 
-  const filteredFleet = fleet.filter(v => {
+    return [...areas, ...routes];
+  }, [fleet]);
+
+  const filteredFleet = fleet.filter((v) => {
     const search = searchTerm.toLowerCase();
-    const matchesSearch = 
-      v.id.toLowerCase().includes(search) || 
+    const matchesSearch =
+      v.id.toLowerCase().includes(search) ||
       (v.VEICPLACA && v.VEICPLACA.toLowerCase().includes(search)) ||
       (v.FUNCNOME && v.FUNCNOME.toLowerCase().includes(search));
+
     const hasOccurrence = !!occurrences[v.id];
-    return onlyOccurrences ? (matchesSearch && hasOccurrence) : matchesSearch;
+
+    // Lógica de Filtro por Grupos (Rota ou Base)
+    const matchesFilter =
+      selectedFilters.size === 0 ||
+      (v.ROTANOME && selectedFilters.has(v.ROTANOME)) ||
+      (v.AREANOME && selectedFilters.has(v.AREANOME));
+
+    return onlyOccurrences ? matchesSearch && hasOccurrence && matchesFilter : matchesSearch && matchesFilter;
   });
 
   const handleUniversalSearch = async (term: string) => {
@@ -208,7 +231,26 @@ export default function TrackingPage() {
      }
   };
 
-  const selectedVehicle = fleet.find(v => v.id === selectedCar);
+  const handleSaveOccurrence = (id: string, text: string) => {
+    if (!text.trim()) return;
+    fetch("/api/fleet/occurrences", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vehicleId: id, occurrenceText: text }),
+    }).then(() => {
+      setOccurrences((prev) => ({ ...prev, [id]: text }));
+    });
+  };
+
+  const handleRemoveOccurrence = (id: string) => {
+    fetch(`/api/fleet/occurrences?id=${id}`, { method: "DELETE" }).then(() => {
+      const next = { ...occurrences };
+      delete next[id];
+      setOccurrences(next);
+    });
+  };
+
+  const selectedVehicle = fleet.find((v) => v.id === selectedCar);
 
   if (!mounted) return (
     <div className="flex items-center justify-center h-screen bg-[var(--background)]">
@@ -223,6 +265,10 @@ export default function TrackingPage() {
         <div className="p-5 bg-gradient-to-r from-blue-600 to-blue-500 text-white flex justify-between items-center">
           <div>
             <h1 className="text-sm font-black uppercase tracking-[0.2em] mb-1" style={{fontFamily: 'var(--font-outfit)'}}>SISGET <span className="opacity-70">FROTA</span></h1>
+            <div className="flex items-center gap-1.5 opacity-60">
+               <div className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+               <span className="text-[9px] font-bold uppercase tracking-widest">Sinc: {lastSync}</span>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <button 
@@ -260,6 +306,12 @@ export default function TrackingPage() {
             />
           </div>
 
+          <MultiSelectCombobox 
+            options={filterOptions}
+            selected={selectedFilters}
+            onChange={setSelectedFilters}
+          />
+
           <div className="flex gap-2">
             <button 
                onClick={() => setOnlyOccurrences(!onlyOccurrences)}
@@ -269,7 +321,7 @@ export default function TrackingPage() {
                     : 'bg-[var(--secondary)] border-[var(--border)] text-[var(--foreground-muted)] hover:border-amber-500/50'}`}
             >
                <Bell className={`w-3 h-3 ${onlyOccurrences ? 'fill-amber-500' : ''}`} />
-               {onlyOccurrences ? 'Filtrando Ocorrências' : 'Filtrar Ocorrências'}
+               {onlyOccurrences ? 'Ocorrências Filtradas' : 'Filtrar Ocorrências'}
             </button>
           </div>
         </div>
@@ -399,11 +451,32 @@ export default function TrackingPage() {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                   <p className="text-[10px] uppercase font-bold text-amber-500 mb-2 leading-none flex items-center gap-2">
-                     <MapPin className="w-3 h-3" /> Região / Ponto de Controle
-                   </p>
-                   <p className="text-xs font-bold text-[var(--foreground)] uppercase tracking-tighter">{selectedVehicle?.AREANOME || 'FORA DE ÁREA MAPEADA'}</p>
+                 <div className="p-3 rounded-xl bg-[var(--secondary)] border border-[var(--border)]">
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-[10px] uppercase font-bold text-[var(--foreground-muted)] leading-none flex items-center gap-2">
+                        <MapPin className="w-3 h-3" /> Região / Ponto de Controle (LIFE)
+                      </p>
+                    </div>
+                    <p className="text-xs font-bold text-[var(--foreground)] uppercase tracking-tighter">
+                      {selectedVehicle?.AREANOME || 'FORA DE ÁREA MAPEADA'}
+                    </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                   <div className="flex justify-between items-center mb-2">
+                     <p className="text-[10px] uppercase font-bold text-blue-500 leading-none flex items-center gap-2">
+                        🛣️ Localização Federal (DNIT)
+                     </p>
+                     <button 
+                       onClick={() => setShowStreetView(true)}
+                       className="text-[9px] font-black bg-blue-500 text-white px-2 py-0.5 rounded hover:bg-blue-400 transition-colors uppercase tracking-tighter"
+                     >
+                       Street View
+                     </button>
+                   </div>
+                    <p className="text-xs font-black text-[var(--foreground)] uppercase tracking-tighter">
+                      {selectedVehicle?.dnitMcr || 'CONSULTANDO...'}
+                    </p>
                 </div>
 
                 <div className="space-y-3 pt-4 border-t border-[var(--border)]">
@@ -434,6 +507,42 @@ export default function TrackingPage() {
           </div>
         )}
       </div>
+
+      {/* Street View Modal Overlay */}
+      {showStreetView && selectedVehicle && (
+        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300">
+           <div className="relative w-full max-w-6xl aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-white/10 flex flex-col">
+              <div className="p-4 bg-[var(--card-bg)] border-b border-[var(--border)] flex justify-between items-center">
+                 <h2 className="text-sm font-black text-[var(--foreground)] uppercase tracking-widest flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                    Street View: #{selectedCar} ({selectedVehicle.VEICPLACA})
+                 </h2>
+                 <button onClick={() => setShowStreetView(false)} className="p-2 hover:bg-[var(--secondary)] rounded-full transition-colors text-[var(--foreground-muted)]">
+                    <X className="w-6 h-6" />
+                 </button>
+              </div>
+              <div className="flex-1 bg-neutral-900 relative">
+                 <iframe 
+                    width="100%" 
+                    height="100%" 
+                    style={{ border: 0 }} 
+                    loading="lazy" 
+                    allowFullScreen 
+                    src={`https://www.google.com/maps/embed/v1/streetview?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'NOT_SET'}&location=${selectedVehicle.lat},${selectedVehicle.lng}`}
+                 />
+                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+                    <span className="text-white text-[10px] font-black uppercase tracking-[1em]">Ambiente Tático</span>
+                 </div>
+                 {/* Alerta se a chave não estiver configurada */}
+                 <div className="absolute bottom-4 left-4 right-4 p-4 bg-red-500/20 border border-red-500/30 backdrop-blur-md rounded-xl text-center">
+                    <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest">
+                       Nota: Google Maps API Key necessária para renderização via Embed. Fallback: <a href={`https://www.google.com/maps?q&layer=c&cbll=${selectedVehicle.lat},${selectedVehicle.lng}`} target="_blank" className="underline">Abrir Externamente</a>
+                    </p>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 }
