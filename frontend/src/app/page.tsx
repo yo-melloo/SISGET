@@ -21,20 +21,36 @@ export default function Login() {
 
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      // Mock validation: any matricula/password works for this demo
-      const mockUser = {
-        name: matricula === "102938" ? "GUSTAVO MELLO" : "AUXILIAR DE TRÁFEGO",
-        role: "Auxiliar",
-        matricula: matricula
-      };
+    try {
+      const response = await fetch("http://localhost:8080/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ matricula, senha }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Credenciais inválidas ou erro no servidor.");
+      }
+
+      const data = await response.json();
       
-      localStorage.setItem("sisget_user", JSON.stringify(mockUser));
-      setIsLoading(false);
-      toast.success(`Bem-vindo, ${mockUser.name}!`);
+      // Store user info and token
+      localStorage.setItem("sisget_user", JSON.stringify({
+        name: data.nome,
+        role: data.cargo,
+        matricula: data.matricula
+      }));
+      localStorage.setItem("sisget_token", data.token);
+
+      toast.success(`Bem-vindo, ${data.nome}!`);
       router.push("/dashboard");
-    }, 1200);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao realizar login.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

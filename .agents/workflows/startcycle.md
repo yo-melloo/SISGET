@@ -1,6 +1,7 @@
 ---
 description: Iniciar o pipeline completo de desenvolvimento autônomo com uma nova ideia
 ---
+
 // turbo-all
 
 Quando o usuário digitar `/startcycle <ideia>`, orquestre o processo de desenvolvimento usando estritamente `.agents/agents.md` e `.agents/skills/`.
@@ -8,7 +9,7 @@ Quando o usuário digitar `/startcycle <ideia>`, orquestre o processo de desenvo
 ### Sequência de Execução:
 
 1. Assuma o papel do **Product Manager (@pm)** e execute a skill `write_specs.md` usando a `<ideia>`.
-   *(Aguarde o usuário aprovar explicitamente a spec. Se o usuário fornecer feedback ou adicionar comentários diretamente no arquivo Markdown, assuma o papel do PM novamente para reler e revisar o documento. Repita este passo até que ele aprove.)*
+   _(Aguarde o usuário aprovar explicitamente a spec. Se o usuário fornecer feedback ou adicionar comentários diretamente no arquivo Markdown, assuma o papel do PM novamente para reler e revisar o documento. Repita este passo até que ele aprove.)_
 
 2. Mude o contexto, assuma o papel do **Engenheiro Backend (@engineer)** e execute a skill `write_tests.md` (Fase RED).
 
