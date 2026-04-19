@@ -51,7 +51,7 @@ Apesar da hierarquia operacional real (Assistentes < Monitores < Coordenadores <
 | US-05 | Auxiliar de tráfego | Gerenciar carros e pneus reserva com status (Oficina) | Saber o que está disponível na garagem |
 | US-06 | Auxiliar de tráfego | Consultar motorista por nome/matrícula e veículo por frota/placa | Localizar dados rapidamente sem navegar por abas ou planilhas |
 | US-07 | Auxiliar de tráfego | Registrar a medição de combustível dos tanques (cm → litros) | Informar o volume atual à central todas as manhãs e repassar entre plantões |
-| US-08 | Auxiliar de tráfego | Visualizar a escala do fluxo diária integrada | Operar o controle de garagem com base nos dados da escala do SharePoint |
+| US-08 | Auxiliar de tráfego | Visualizar a escala do fluxo diária integrada | Operar o controle de garagem com base na carga de dados local (.xlsx) |
 | US-09 | (Removido) | - | - |
 
 > **Senha padrão:** A senha inicial de cada usuário será sua matrícula. O usuário poderá alterá-la posteriormente.
@@ -130,7 +130,7 @@ Duas tabelas idênticas em estrutura, separadas por turno.
 - Seção lateral: CARROS RESERVA, PNEUS RESERVA, OCORRÊNCIAS, OUTROS.
 
 ### 4.4 Módulo: Escala do Fluxo (Diária)
-Visualização da escala de tráfego do dia. A fonte primária é uma **planilha online do SharePoint Excel**.
+Visualização da escala de tráfego do dia. A fonte primária é o **upload manual da planilha da escala (.xlsx)**.
 - **Nota Importante:** Este módulo refere-se exclusivamente à **Escala do Fluxo de Frota** (dados operacionais diários). Não inclui validações de RH (descanso, 11h, 6+1), que pertencem ao futuro processo de "Escala de Motoristas".
 
 | Coluna | Descrição |
@@ -177,7 +177,7 @@ Base de dados inicial com 604 motoristas e 170 veículos (extraídos da aba ocul
 | RF-05 | O sistema deve calcular volume de combustível (cm → litros) com base na tabela técnica |
 | RF-06 | O sistema deve permitir consulta bidirecional Placa ↔ Frota e busca de motoristas |
 | RF-07 | O sistema deve registrar operação de frota diurna e noturna com dados de tripulação |
-| RF-08 | O sistema deve consumir e exibir a escala diária do fluxo a partir do SharePoint Excel |
+| RF-08 | O sistema deve consumir e exibir a escala diária do fluxo a partir do upload de arquivo local (.xlsx) |
 | RF-09 | O sistema deve destacar visualmente linhas com status "CANCELADO" |
 | RF-10 | O sistema deve registrar timestamp e autor de cada atualização de dados |
 | RF-11 | (Removido) |
@@ -230,12 +230,12 @@ Base de dados inicial com 604 motoristas e 170 veículos (extraídos da aba ocul
 ## 9. Escopo
 
 ### ✅ In (Beta 1 — até 15/05/2026)
-- Autenticação por matrícula
+- [x] **TASK-004: Autenticação JWT** (Identity) - ✅ Concluído
 - Dashboard com módulos
 - Controle de Garagem (Reservas/Oficina + Combustível)
 - Posicionamento de Frota (3 bases)
 - Operação de Frota (Diurna / Noturna)
-- Escala do Fluxo (Diária) com integração SharePoint
+- Escala do Fluxo (Diária) com carga de dados local (.xlsx)
 - Consulta Rápida (Placa ↔ Frota, Motorista)
 - Cadastro de Motoristas e Veículos
 - Seeds de dados iniciais da planilha SISGET
@@ -291,7 +291,7 @@ Base de dados inicial com 604 motoristas e 170 veículos (extraídos da aba ocul
 | Prazo agressivo (1 mês para Beta 1) | Alto | Priorização rígida do escopo In, desenvolvimento gradual |
 | Dados da planilha com inconsistências (`#REF!`, `#N/A`) | Médio | Validação e limpeza na migração inicial (seeds já extraídas e disponíveis) |
 | Ausência de infraestrutura de deploy | Baixo | Início local, deploy apenas na Beta 2 |
-| Dependência do SharePoint Excel (Escala do Fluxo) | Médio | Fallback manual de inserção de dados caso a integração falhe |
+| Dependência do arquivo da Escala do Fluxo | Médio | O fluxo depende da importação manual do arquivo .xlsx pelo auxiliar de tráfego |
 
 ---
 

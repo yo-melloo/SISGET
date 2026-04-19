@@ -190,15 +190,15 @@
 
 ## Fase 4 — Escala e Consulta
 
-### TASK-015: Sincronização Escala do Fluxo (SharePoint)
+### TASK-015: Importação Escala do Fluxo (Arquivo Local)
 - **Prioridade:** 🟡
 - **Módulo:** Escala / API
-- **Descrição:** Desenvolver serviço de consumo da planilha Excel Online (SharePoint). Foco total no input de dados para a base operacional diária.
+- **Descrição:** Desenvolver funcionalidade de upload e processamento da planilha Excel (.xlsx). Foco total no input de dados para a base operacional diária a partir de arquivos locais.
 - **Critérios de aceite:**
-- [ ] Serviço lê a planilha SharePoint
-- [ ] Dados mapeados para a grade operacional do SISGET
-- [ ] Sincronismo funcional sem regras de validação de RH/descanso
-- [ ] Fallback: inserção manual total funcional
+- [x] Serviço processa o payload da planilha local via API
+- [x] Dados mapeados por índice de coluna (imune a nomes de cabeçalho)
+- [x] Sincronismo funcional com deleção automática de dados antigos da data
+- [x] Importação manual (.xlsx) 100% funcional com suporte a datas US/BR
 - **Dependências:** TASK-003
 - **RF:** RF-08
 

@@ -45,11 +45,11 @@
 
 ---
 
-## 4. Escala de Fluxo (Integração SharePoint)
+## 4. Escala de Fluxo (Carga de Dados Local)
 
 ### 4.1 Processamento de Planilha
-- **RN04-01:** O sistema será alimentado por uma cópia em .xlsx da escala disponibilizada no SharePoint. Através de um script python, os dados da tabela serão convertidos em dados SQL e integrado aos registros do banco de dados. A API irá carregar/distribuir os dados no sistema baseado nesses registros salvos no banco, especialmente nos atuais (data de hoje). Chamo de dinâmica "Carregar e Atirar", Carregar: Realizar upload do arquivo da escala, realizar conversão de dados e inserir/atualizar no banco. Atirar: Aplicar e sincronizar alterações dos dados no sistema.
-- **RN04-02:** O sistema deverá ser capaz de receber e atualizar o banco de dados independente de qual seja a data do registro carregado: Gustavo inseriu a escala do dia 3 repetidas vezes, o sistema apenas atualizou o dia 3 no banco de dados - se é que houve alguma mudança
+- **RN04-01:** O sistema é alimentado pelo upload manual do arquivo `.xlsx` da escala. A conversão dos dados ocorre na interface web, extraindo informações por índice de coluna (imune a nomes de cabeçalhos) e enviando o payload para a API. A API sincroniza os dados usando "Deleção por Data" (limpa a data e insere o novo), garantindo que o arquivo local seja soberano. Dinâmica "Carregar e Atirar".
+- **RN04-02:** O sistema aceita qualquer data: se carregar a escala de amanhã hoje, ela já fica salva e acessível via calendário.
 - Nota do Desenvolvedor: Futuramente, ao se fundir com o Vitae, vamos ter que misturar essas tabelas de bancos de dados por serem parecidas e precisar de padronização, a escala vai ser a principal delas, a primeiro momento acredito que uma tabela simples resolva, mas quando estiver servindo para fazer escalas automatizadas, vamos precisar de índices, coisa que por enquanto não se faz necessário - até onde eu saiba.
 
 ---

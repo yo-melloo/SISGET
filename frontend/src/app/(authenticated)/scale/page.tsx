@@ -13,7 +13,9 @@ import {
   AlertCircle,
   CheckCircle2,
   ExternalLink,
-  Plus
+  Plus,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { motion } from "motion/react";
 
@@ -35,29 +37,25 @@ interface EscalaItem {
   servico: string;
 }
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const mockEscala: EscalaItem[] = [
-  { id: 1, diaSemana: "Quinta-feira", data: "16/04/2026", garagem: "Imperatriz", carro: "1042", hrGaragem: "05:00", hrSaida: "05:45", origem: "Imperatriz", destino: "São Luís", motorista: "RAIMUNDO LIMA (081234)", linha: "Imperatriz x São Luís 05:45", servico: "LINHA" },
-  { id: 2, diaSemana: "Quinta-feira", data: "16/04/2026", garagem: "Imperatriz", carro: "1018", hrGaragem: "05:15", hrSaida: "06:00", origem: "Imperatriz", destino: "Belém", motorista: "CARLOS SOUZA (073891)", linha: "Imperatriz x Belém 06:00", servico: "LINHA" },
-  { id: 3, diaSemana: "Quinta-feira", data: "16/04/2026", garagem: "São Luís", carro: "2031", hrGaragem: "05:45", hrSaida: "06:30", origem: "São Luís", destino: "Imperatriz", motorista: "ANTONIO ROCHA (088741)", linha: "São Luís x Imperatriz 06:30", servico: "LINHA" },
-  { id: 4, diaSemana: "Quinta-feira", data: "16/04/2026", garagem: "Imperatriz", carro: "1055", hrGaragem: "06:00", hrSaida: "06:30", origem: "Imperatriz", destino: "Petrobras", motorista: "JOSE FERREIRA (092011)", linha: "Fretado Petrobras 06:30", servico: "FRETAMENTO" },
-  { id: 5, diaSemana: "Quinta-feira", data: "16/04/2026", garagem: "Belém", carro: "3012", hrGaragem: "06:15", hrSaida: "07:00", origem: "Belém", destino: "Imperatriz", motorista: "MARCOS ALVES (066552)", linha: "Belém x Imperatriz 07:00", servico: "LINHA" },
-  { id: 6, diaSemana: "Quinta-feira", data: "16/04/2026", garagem: "Imperatriz", carro: "1042", hrGaragem: "17:15", hrSaida: "18:00", origem: "São Luís", destino: "Imperatriz", motorista: "MARCOS ALVES (066552)", linha: "São Luís x Imperatriz 18:00", servico: "LINHA" },
-  { id: 7, diaSemana: "Quinta-feira", data: "16/04/2026", garagem: "Imperatriz", carro: "1031", hrGaragem: "18:45", hrSaida: "19:30", origem: "Belém", destino: "Imperatriz", motorista: "ANTONIO ROCHA (088741)", linha: "Belém x Imperatriz 19:30", servico: "LINHA" },
-];
-
 export default function ScalePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSync, setLastSync] = useState("16/04/2026 08:00");
+  const [lastSync, setLastSync] = useState("-");
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [escalaData, setEscalaData] = useState<EscalaItem[]>([]);
   const [filteredEscala, setFilteredEscala] = useState<EscalaItem[]>([]);
 
-  const fetchEscala = async () => {
+  const fetchEscala = async (dateParam: string) => {
     setIsSyncing(true);
     try {
-      // Simulação: Forçando a data 2026-04-16 que alimentamos pelo scrapper
-      const response = await fetch("http://localhost:8080/api/escalas?data=2026-04-16");
+      console.log("Buscando escalas para a data:", dateParam);
+      
+      const token = localStorage.getItem("sisget_token");
+      const response = await fetch(`http://localhost:8080/api/escalas?data=${dateParam}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         const mappedData = data.map((item: any) => ({
@@ -89,8 +87,14 @@ export default function ScalePage() {
   };
 
   useEffect(() => {
-    fetchEscala();
-  }, []);
+    fetchEscala(selectedDate);
+  }, [selectedDate]);
+
+  const changeDate = (days: number) => {
+    const current = new Date(selectedDate + "T12:00:00"); // avoid tz issues
+    current.setDate(current.getDate() + days);
+    setSelectedDate(current.toISOString().split('T')[0]);
+  };
 
   useEffect(() => {
     const filtered = escalaData.filter(item => 
@@ -103,93 +107,121 @@ export default function ScalePage() {
     setFilteredEscala(filtered);
   }, [searchTerm, escalaData]);
 
-  const handleSync = () => {
-    fetchEscala();
-  };
-
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    console.log("Iniciando processamento do arquivo:", file.name);
     setIsSyncing(true);
     try {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // raw: false ensures cells formatted as dates are read as strings, dateNF defines format
-      const rawData = XLSX.utils.sheet_to_json<any>(sheet, { range: 1, raw: false, dateNF: "yyyy-mm-dd" });
+      const rows = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, raw: false, dateNF: "yyyy-mm-dd" });
+      
+      console.log("Total de linhas lidas (incluindo cabeçalho):", rows.length);
+      if (rows.length < 2) throw new Error("A planilha parece estar vazia.");
 
       const payload = [];
       let lastDiaSemana = "";
       let lastData = "";
 
-      for (const row of rawData) {
-        // Forward fill para as células mescladas de Data e Dia da Semana
-        const diaSemana = row['D. SEM'] || lastDiaSemana;
-        let dataVal = row['DATA'] || lastData;
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length === 0) continue;
+
+        const diaSemana = (row[0] || lastDiaSemana);
+        let dataVal = (row[1] || lastData);
         lastDiaSemana = diaSemana;
         lastData = dataVal;
 
         if (!dataVal) continue;
-        const servV = row['SERVIÇO'] || row['SERVIÇO '];
-        if (!servV) continue;
-
+        
+        // Inteligência de Data (Suporta DD/MM/YYYY, M/D/YY, etc)
         if (dataVal.includes("/")) {
-           dataVal = dataVal.split("/").reverse().join("-"); // Ajuste fallback caso o browser leia DD/MM/YYYY
+           const parts = dataVal.split("/");
+           if (parts.length === 3) {
+             let d = parts[0], m = parts[1], y = parts[2];
+             // Se o primeiro par é > 12, assume BR (DD/MM/YYYY). Se <= 12 e segundo > 12, assume US (MM/DD/YYYY)
+             if (parseInt(d) <= 12 && parseInt(m) > 12) {
+                // Swap para US -> ISO
+                [d, m] = [m, d];
+             }
+             if (y.length === 2) y = "20" + y;
+             dataVal = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+           }
         }
 
         const formatTime = (t: any) => {
           if (!t) return null;
           let str = String(t).trim();
-          if (str.includes(' ')) str = str.split(' ')[1]; // caso seja uma data 1889-12-31 06:00
+          if (str.toLowerCase() === 'undefined' || str === '') return null;
+          if (str.includes(' ')) str = str.split(' ')[1];
           if (str.includes(':')) {
-             if (str.split(':').length === 2) return str + ':00';
-             return str;
+             const p = str.split(':');
+             return `${p[0].padStart(2, '0')}:${p[1].padStart(2, '0')}:00`;
           }
           return null;
         };
 
-        let carro = String(row['CARRO'] || "");
-        if (carro.endsWith('.0')) carro = carro.replace('.0', '');
-        
-        let servico = String(servV || "");
-        if (servico.endsWith('.0')) servico = servico.replace('.0', '');
+        const cleanStr = (val: any) => {
+          if (val === undefined || val === null) return "";
+          let s = String(val).trim();
+          if (s.toLowerCase() === 'undefined') return "";
+          if (s.endsWith('.0')) s = s.replace('.0', '');
+          return s;
+        };
 
         payload.push({
-          diaSemana: String(diaSemana).toUpperCase(),
+          diaSemana: String(diaSemana || "").toUpperCase(),
           data: dataVal,
-          garagem: String(row['BASE'] || ""),
-          carro: carro,
-          horarioGaragem: formatTime(row['SAÍDA GAR.']),
-          horarioSaida: formatTime(row['SAÍDA ROD.']),
-          origem: String(row['ORIGEM'] || ""),
-          destino: String(row['DESTINO'] || ""),
-          motorista: String(row['MOTORISTA IMP x STI/PGM'] || ""),
-          linha: String(row['LINHA'] || ""),
-          servico: servico
+          garagem: cleanStr(row[2]),
+          carro: cleanStr(row[3]),
+          horarioGaragem: formatTime(row[4]),
+          horarioSaida: formatTime(row[5]),
+          origem: cleanStr(row[6]),
+          destino: cleanStr(row[7]),
+          motorista: cleanStr(row[8]),
+          linha: cleanStr(row[9]),
+          servico: cleanStr(row[11])
         });
       }
 
-      // Sincronizar via POST API
+      console.log("Payload final para API:", payload.slice(0, 2));
+
+      const token = localStorage.getItem("sisget_token");
       const response = await fetch("http://localhost:8080/api/escalas/sync", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify(payload)
       });
 
       if (response.ok) {
-        await fetchEscala();
-        alert(`Sucesso! ${payload.length} escalas integradas com a API.`);
+        // Pega a data de um dos itens do payload para recarregar a visão correta
+        const syncDate = payload.length > 0 ? payload[0].data : undefined;
+        if (syncDate) setSelectedDate(syncDate);
+        else await fetchEscala(selectedDate);
+        
+        alert(`Sucesso! ${payload.length} escalas sincronizadas.`);
       } else {
-        alert("Falha do Servidor: A replicação falhou!");
+        const contentType = response.headers.get("content-type");
+        let msg = "Erro desconhecido no servidor.";
+        if (contentType && contentType.includes("application/json")) {
+           const errorData = await response.json();
+           msg = errorData.message || msg;
+        }
+        alert(`Falha: ${msg}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("Erro corrompido ao processar a planilha XLSX.");
+      alert(error.message || "Erro no processamento.");
     } finally {
       setIsSyncing(false);
-      event.target.value = ''; // limpa input html
+      if (event.target) event.target.value = '';
     }
   };
 
@@ -205,11 +237,11 @@ export default function ScalePage() {
             </h1>
             <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${isSyncing ? 'bg-amber-500/10 text-amber-500 animate-pulse' : 'bg-emerald-500/10 text-emerald-500'}`}>
               {isSyncing ? (
-                <>Sincronizando...</>
+                <>Atualizando...</>
               ) : (
                 <>
                   <CheckCircle2 className="w-3 h-3" />
-                  Sincronizado
+                  Pronto
                 </>
               )}
             </div>
@@ -218,46 +250,71 @@ export default function ScalePage() {
         
         <div className="flex items-center gap-4">
           <div className="text-right hidden sm:block">
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest leading-none mb-1">Última Sincronização</p>
-            <p className="text-sm font-medium text-[var(--foreground)]">{lastSync}</p>
+            <p className="text-[10px] font-bold text-muted uppercase tracking-widest leading-none mb-1">Status da Sessão</p>
+            <p className="text-sm font-medium text-[var(--foreground)]">{lastSync === "-" ? "Aguardando Carga" : `Última carga: ${lastSync}`}</p>
           </div>
-          <button 
-            onClick={handleSync}
-            disabled={isSyncing}
-            className={`btn-primary h-12 px-6 flex items-center gap-2 ${isSyncing ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            <RefreshCcw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-            Sincronizar Agora
-          </button>
         </div>
       </section>
 
-      {/* Integration Info Card */}
-      <section className="glass p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 border-l-4 border-blue-500">
-        <div className="flex items-center gap-5">
-          <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500">
-            <FileText className="w-6 h-6" />
+      {/* Date Navigation & Integration Info */}
+      <section className="flex flex-col xl:flex-row gap-6">
+        {/* Date Selector */}
+        <div className="glass p-6 rounded-2xl flex flex-1 items-center justify-between border-l-4 border-emerald-500">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500">
+              <Calendar className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-muted uppercase tracking-widest leading-none mb-1">Visualizar Data</p>
+              <input 
+                type="date" 
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="bg-transparent border-none outline-none font-bold text-lg text-[var(--foreground)] cursor-pointer"
+              />
+            </div>
           </div>
-          <div>
-            <h3 className="font-bold text-sm">Integração Escala do Fluxo</h3>
-            <p className="text-muted text-xs mt-1">
-              Sincronizado via SharePoint Corporativo. Use o botão ao lado para carregar uma planilha local (.xlsx) como fallback.
-            </p>
+          
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => changeDate(-1)}
+              className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[var(--secondary)] transition-colors border border-[var(--border)]"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span className="sr-only">Anterior</span>
+            </button>
+            <button 
+              onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+              className="px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-[var(--secondary)] transition-colors border border-[var(--border)] rounded-lg"
+            >
+              Hoje
+            </button>
+            <button 
+              onClick={() => changeDate(1)}
+              className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[var(--secondary)] transition-colors border border-[var(--border)]"
+            >
+              <ChevronRight className="w-4 h-4" />
+              <span className="sr-only">Próximo</span>
+            </button>
           </div>
         </div>
-        <div className="flex gap-3">
-          <label className="flex items-center gap-2 text-xs font-bold text-blue-500 hover:text-blue-400 transition-colors bg-blue-500/5 px-4 py-2 rounded-lg cursor-pointer">
+
+        {/* Integration Card (Small) */}
+        <div className="glass p-6 rounded-2xl flex items-center justify-between gap-6 border-l-4 border-blue-500 min-w-[400px]">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-xs">Carga de Dados Local</h3>
+              <p className="text-muted text-[10px] mt-0.5">Clique no botão para importar a planilha (.xlsx)</p>
+            </div>
+          </div>
+          <label className="flex items-center gap-2 text-[10px] font-bold text-blue-500 hover:text-blue-400 transition-colors bg-blue-500/5 px-4 py-2 rounded-lg cursor-pointer">
             <Plus className="w-3 h-3" />
-            CARREGAR ARQUIVO LOCAL
+            IMPORTAR ARQUIVO
             <input type="file" className="hidden" accept=".xlsx,.xls" onChange={handleFileUpload} />
           </label>
-          <a 
-            href="#" 
-            className="flex items-center gap-2 text-xs font-bold text-muted hover:text-white transition-colors bg-[var(--secondary)] px-4 py-2 rounded-lg"
-          >
-            ABRIR SHAREPOINT
-            <ExternalLink className="w-3 h-3" />
-          </a>
         </div>
       </section>
 
