@@ -34,7 +34,13 @@ interface EscalaItem {
   destino: string;
   motorista: string;
   linha: string;
+  trecho: string;
   servico: string;
+}
+
+interface SortConfig {
+  key: keyof EscalaItem | null;
+  direction: 'ascending' | 'descending';
 }
 
 export default function ScalePage() {
@@ -44,14 +50,23 @@ export default function ScalePage() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [escalaData, setEscalaData] = useState<EscalaItem[]>([]);
   const [filteredEscala, setFilteredEscala] = useState<EscalaItem[]>([]);
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: 'ascending' });
+
+  // Modal States
+  const [isDriverModalOpen, setIsDriverModalOpen] = useState(false);
+  const [selectedDriverData, setSelectedDriverData] = useState<any>(null);
+  const [isVehicleModalOpen, setIsVehicleModalOpen] = useState(false);
+  const [selectedVehicleData, setSelectedVehicleData] = useState<any>(null);
+  const [isLoadingModal, setIsLoadingModal] = useState(false);
 
   const fetchEscala = async (dateParam: string) => {
     setIsSyncing(true);
     try {
-      console.log("Buscando escalas para a data:", dateParam);
-      
+      const BACKEND_URL = typeof window !== "undefined" 
+        ? `http://${window.location.hostname}:8080` 
+        : "http://localhost:8080";
       const token = localStorage.getItem("sisget_token");
-      const response = await fetch(`http://localhost:8080/api/escalas?data=${dateParam}`, {
+      const response = await fetch(`${BACKEND_URL}/api/escalas?data=${dateParam}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -70,6 +85,7 @@ export default function ScalePage() {
           destino: item.destino,
           motorista: item.motorista,
           linha: item.linha,
+          trecho: item.trecho,
           servico: item.servico
         }));
         setEscalaData(mappedData);
@@ -80,7 +96,7 @@ export default function ScalePage() {
         }));
       }
     } catch (error) {
-      console.error("Erro na integração com backend:", error);
+      console.error("Erro na integração:", error);
     } finally {
       setIsSyncing(false);
     }
@@ -91,36 +107,53 @@ export default function ScalePage() {
   }, [selectedDate]);
 
   const changeDate = (days: number) => {
-    const current = new Date(selectedDate + "T12:00:00"); // avoid tz issues
+    const current = new Date(selectedDate + "T12:00:00");
     current.setDate(current.getDate() + days);
     setSelectedDate(current.toISOString().split('T')[0]);
   };
 
+  const handleSort = (key: keyof EscalaItem) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
   useEffect(() => {
-    const filtered = escalaData.filter(item => 
+    let filtered = escalaData.filter(item => 
       (item.motorista || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.carro || "").includes(searchTerm) ||
       (item.linha || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.trecho || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.origem || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.destino || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    if (sortConfig.key !== null) {
+      filtered.sort((a, b) => {
+        const aValue = String(a[sortConfig.key!] || "");
+        const bValue = String(b[sortConfig.key!] || "");
+        if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+        return 0;
+      });
+    }
+
     setFilteredEscala(filtered);
-  }, [searchTerm, escalaData]);
+  }, [searchTerm, escalaData, sortConfig]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    console.log("Iniciando processamento do arquivo:", file.name);
     setIsSyncing(true);
     try {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-
       const rows = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, raw: false, dateNF: "yyyy-mm-dd" });
       
-      console.log("Total de linhas lidas (incluindo cabeçalho):", rows.length);
       if (rows.length < 2) throw new Error("A planilha parece estar vazia.");
 
       const payload = [];
@@ -138,16 +171,11 @@ export default function ScalePage() {
 
         if (!dataVal) continue;
         
-        // Inteligência de Data (Suporta DD/MM/YYYY, M/D/YY, etc)
         if (dataVal.includes("/")) {
            const parts = dataVal.split("/");
            if (parts.length === 3) {
              let d = parts[0], m = parts[1], y = parts[2];
-             // Se o primeiro par é > 12, assume BR (DD/MM/YYYY). Se <= 12 e segundo > 12, assume US (MM/DD/YYYY)
-             if (parseInt(d) <= 12 && parseInt(m) > 12) {
-                // Swap para US -> ISO
-                [d, m] = [m, d];
-             }
+             if (parseInt(d) <= 12 && parseInt(m) > 12) [d, m] = [m, d];
              if (y.length === 2) y = "20" + y;
              dataVal = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
            }
@@ -169,7 +197,6 @@ export default function ScalePage() {
           if (val === undefined || val === null) return "";
           let s = String(val).trim();
           if (s.toLowerCase() === 'undefined') return "";
-          if (s.endsWith('.0')) s = s.replace('.0', '');
           return s;
         };
 
@@ -183,15 +210,15 @@ export default function ScalePage() {
           origem: cleanStr(row[6]),
           destino: cleanStr(row[7]),
           motorista: cleanStr(row[8]),
-          linha: cleanStr(row[9]),
+          trecho: cleanStr(row[9]),  // Invertido conforme Point 8
+          linha: cleanStr(row[10]),   // Invertido conforme Point 8
           servico: cleanStr(row[11])
         });
       }
 
-      console.log("Payload final para API:", payload.slice(0, 2));
-
       const token = localStorage.getItem("sisget_token");
-      const response = await fetch("http://localhost:8080/api/escalas/sync", {
+      const BACKEND_URL = typeof window !== "undefined" ? `http://${window.location.hostname}:8080` : "http://localhost:8080";
+      const response = await fetch(`${BACKEND_URL}/api/escalas/sync`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -201,20 +228,12 @@ export default function ScalePage() {
       });
 
       if (response.ok) {
-        // Pega a data de um dos itens do payload para recarregar a visão correta
         const syncDate = payload.length > 0 ? payload[0].data : undefined;
         if (syncDate) setSelectedDate(syncDate);
         else await fetchEscala(selectedDate);
-        
         alert(`Sucesso! ${payload.length} escalas sincronizadas.`);
       } else {
-        const contentType = response.headers.get("content-type");
-        let msg = "Erro desconhecido no servidor.";
-        if (contentType && contentType.includes("application/json")) {
-           const errorData = await response.json();
-           msg = errorData.message || msg;
-        }
-        alert(`Falha: ${msg}`);
+        alert("Falha na sincronização.");
       }
     } catch (error: any) {
       console.error(error);
@@ -225,8 +244,86 @@ export default function ScalePage() {
     }
   };
 
+  const handleOpenDriverModal = async (motoristaStr: string) => {
+    if (!motoristaStr) return;
+    const matricula = motoristaStr.includes(" - ") ? motoristaStr.split(" - ")[1] : motoristaStr;
+    setIsLoadingModal(true);
+    try {
+      const token = localStorage.getItem("sisget_token");
+      const BACKEND_URL = typeof window !== "undefined" ? `http://${window.location.hostname}:8080` : "http://localhost:8080";
+      const response = await fetch(`${BACKEND_URL}/api/search/motorista/${matricula}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        setSelectedDriverData(await response.json());
+        setIsDriverModalOpen(true);
+      } else {
+        alert("Motorista não encontrado na base.");
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoadingModal(false);
+    }
+  };
+
+  const handleOpenVehicleModal = async (rawPrefix: string) => {
+    if (!rawPrefix || rawPrefix.toUpperCase() === 'CANCELADO') return;
+    const prefixo = rawPrefix.trim();
+    setIsLoadingModal(true);
+    try {
+      const token = localStorage.getItem("sisget_token");
+      const BACKEND_URL = typeof window !== "undefined" ? `http://${window.location.hostname}:8080` : "http://localhost:8080";
+      // Busca dados do veículo
+      const vResp = await fetch(`${BACKEND_URL}/api/search/veiculo/${prefixo}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      // Busca dados de rastreamento (Point 3)
+      const tResp = await fetch(`${BACKEND_URL}/api/fleet/latest`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (vResp.ok) {
+        const vData = await vResp.json();
+        let tracking = null;
+        let city = null;
+
+        if (tResp.ok) {
+          const tData = await tResp.json();
+          tracking = tData.fleet.find((f: any) => f.vehicleId === prefixo);
+          
+          // Requisição sob demanda para geocodificação (Point: "rodar quando focarmos")
+          try {
+            const gResp = await fetch(`${BACKEND_URL}/api/search/geocoding/vehicle/${prefixo}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (gResp.ok) {
+              const gData = await gResp.json();
+              if (gData) city = gData.city;
+            }
+          } catch (ge) {
+            console.warn("Geocoding on-demand falhou:", ge);
+          }
+        }
+
+        setSelectedVehicleData({ 
+          ...vData, 
+          tracking: tracking ? { ...tracking, cityLocation: city || tracking.cityLocation } : null 
+        });
+        setIsVehicleModalOpen(true);
+      } else {
+        alert("Veículo não encontrado na base.");
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoadingModal(false);
+    }
+  };
+
   return (
-    <div className="space-y-8 max-w-[1400px] mx-auto">
+    <div className="space-y-8 max-w-[1400px] mx-auto pb-20">
       {/* Header Section */}
       <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
@@ -236,14 +333,7 @@ export default function ScalePage() {
               Escala do Fluxo
             </h1>
             <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${isSyncing ? 'bg-amber-500/10 text-amber-500 animate-pulse' : 'bg-emerald-500/10 text-emerald-500'}`}>
-              {isSyncing ? (
-                <>Atualizando...</>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-3 h-3" />
-                  Pronto
-                </>
-              )}
+              {isSyncing ? <>Atualizando...</> : <><CheckCircle2 className="w-3 h-3" />Pronto</>}
             </div>
           </div>
         </div>
@@ -258,7 +348,6 @@ export default function ScalePage() {
 
       {/* Date Navigation & Integration Info */}
       <section className="flex flex-col xl:flex-row gap-6">
-        {/* Date Selector */}
         <div className="glass p-6 rounded-2xl flex flex-1 items-center justify-between border-l-4 border-emerald-500">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500">
@@ -276,67 +365,38 @@ export default function ScalePage() {
           </div>
           
           <div className="flex items-center gap-2">
-            <button 
-              onClick={() => changeDate(-1)}
-              className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[var(--secondary)] transition-colors border border-[var(--border)]"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span className="sr-only">Anterior</span>
-            </button>
-            <button 
-              onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-              className="px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-[var(--secondary)] transition-colors border border-[var(--border)] rounded-lg"
-            >
-              Hoje
-            </button>
-            <button 
-              onClick={() => changeDate(1)}
-              className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[var(--secondary)] transition-colors border border-[var(--border)]"
-            >
-              <ChevronRight className="w-4 h-4" />
-              <span className="sr-only">Próximo</span>
-            </button>
+            <button onClick={() => changeDate(-1)} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[var(--secondary)] transition-colors border border-[var(--border)]"><ChevronLeft className="w-4 h-4" /></button>
+            <button onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])} className="px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-[var(--secondary)] transition-colors border border-[var(--border)] rounded-lg">Hoje</button>
+            <button onClick={() => changeDate(1)} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[var(--secondary)] transition-colors border border-[var(--border)]"><ChevronRight className="w-4 h-4" /></button>
           </div>
         </div>
 
-        {/* Integration Card (Small) */}
         <div className="glass p-6 rounded-2xl flex items-center justify-between gap-6 border-l-4 border-blue-500 min-w-[400px]">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500">
-              <FileText className="w-5 h-5" />
-            </div>
+            <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500"><FileText className="w-5 h-5" /></div>
             <div>
               <h3 className="font-bold text-xs">Carga de Dados Local</h3>
               <p className="text-muted text-[10px] mt-0.5">Clique no botão para importar a planilha (.xlsx)</p>
             </div>
           </div>
           <label className="flex items-center gap-2 text-[10px] font-bold text-blue-500 hover:text-blue-400 transition-colors bg-blue-500/5 px-4 py-2 rounded-lg cursor-pointer">
-            <Plus className="w-3 h-3" />
-            IMPORTAR ARQUIVO
+            <Plus className="w-3 h-3" />IMPORTAR ARQUIVO
             <input type="file" className="hidden" accept=".xlsx,.xls" onChange={handleFileUpload} />
           </label>
         </div>
       </section>
 
-      {/* Search and Filters */}
-      <section className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1 glass flex items-center gap-3 px-4 py-3 rounded-xl focus-within:border-blue-500/50 border border-[var(--border)] transition-all">
+      {/* Search (Simplified - Point 1) */}
+      <section>
+        <div className="flex-1 glass flex items-center gap-3 px-4 py-4 rounded-2xl focus-within:ring-2 focus-within:ring-blue-500/30 border border-[var(--border)] transition-all">
           <Search className="w-5 h-5 text-muted" />
           <input 
             type="text" 
-            placeholder="Buscar por motorista, frota ou linha..." 
-            className="bg-transparent border-none outline-none w-full text-sm placeholder:text-muted"
+            placeholder="Pesquisar por motorista, frota ou trecho..." 
+            className="bg-transparent border-none outline-none w-full text-base placeholder:text-muted"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-        </div>
-        <div className="flex gap-2">
-          <button className="glass px-4 py-3 rounded-xl border border-[var(--border)] text-xs font-bold text-muted uppercase tracking-widest hover:bg-[var(--secondary)] transition-all">
-            Filtros
-          </button>
-          <button className="glass px-4 py-3 rounded-xl border border-[var(--border)] text-xs font-bold text-muted uppercase tracking-widest hover:bg-[var(--secondary)] transition-all">
-            Exportar
-          </button>
         </div>
       </section>
 
@@ -346,105 +406,167 @@ export default function ScalePage() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-[var(--border)] bg-[var(--secondary)]/50">
-                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Início / Saída</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Veículo</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Base / Garagem</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Motorista</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Trecho / Linha</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Serviço</th>
+                <th onClick={() => handleSort('hrSaida')} className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest cursor-pointer hover:text-blue-500 transition-colors">Início / Saída</th>
+                <th onClick={() => handleSort('carro')} className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest cursor-pointer hover:text-blue-500 transition-colors">Veículo</th>
+                <th onClick={() => handleSort('motorista')} className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest cursor-pointer hover:text-blue-500 transition-colors">Motorista</th>
+                <th onClick={() => handleSort('trecho')} className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest cursor-pointer hover:text-blue-500 transition-colors">Trecho / Linha</th>
+                <th onClick={() => handleSort('servico')} className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest cursor-pointer hover:text-blue-500 transition-colors">Serviço</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
               {filteredEscala.length > 0 ? (
-                filteredEscala.map((item, idx) => (
-                  <motion.tr 
-                    key={item.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="hover:bg-[var(--secondary)] transition-colors group"
-                  >
-                    <td className="px-6 py-5">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2 text-sm font-bold">
-                          <Clock className="w-3.5 h-3.5 text-blue-500" />
-                          {item.hrSaida}
+                filteredEscala.map((item, idx) => {
+                  const isCancelled = (item.carro || "").toUpperCase() === 'CANCELADO';
+                  return (
+                    <motion.tr 
+                      key={item.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.03 }}
+                      className={`hover:bg-[var(--secondary)] transition-colors group ${isCancelled ? 'bg-red-500/10' : ''}`}
+                    >
+                      <td className="px-6 py-5">
+                        <div className="flex flex-col gap-0.5">
+                          <div className={`flex items-center gap-2 text-sm font-bold ${isCancelled ? 'text-red-500' : ''}`}>
+                            <Clock className={`w-3.5 h-3.5 ${isCancelled ? 'text-red-500' : 'text-blue-500'}`} />
+                            {item.hrSaida}
+                          </div>
+                          <span className="text-[9px] text-muted font-bold">GARAGEM: {item.hrGaragem}</span>
                         </div>
-                        <div className="text-[10px] text-muted flex items-center gap-1">
-                          <span className="font-bold">GARAGEM:</span> {item.hrGaragem}
+                      </td>
+                      <td className="px-6 py-5">
+                        <div 
+                          className="flex items-center gap-3 cursor-pointer group/v" 
+                          onClick={() => handleOpenVehicleModal(item.carro)}
+                        >
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all ${isCancelled ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-[var(--secondary)] text-blue-500 border-[var(--border)] group-hover/v:bg-blue-500/10 group-hover/v:border-blue-500/20'}`}>
+                            <Bus className="w-4 h-4" />
+                          </div>
+                          <span className={`text-sm font-black italic tracking-tighter ${isCancelled ? 'text-red-500 animate-pulse' : ''}`}>{item.carro}</span>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[var(--secondary)] flex items-center justify-center text-blue-500 border border-[var(--border)] group-hover:bg-blue-500/10 group-hover:border-blue-500/20 transition-all">
-                          <Bus className="w-4 h-4" />
+                      </td>
+                      <td className="px-6 py-5">
+                        <div 
+                          className="flex items-center gap-3 cursor-pointer hover:opacity-70 transition-opacity"
+                          onClick={() => handleOpenDriverModal(item.motorista)}
+                        >
+                          <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500"><User className="w-4 h-4" /></div>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold leading-none mb-1">{item.motorista ? item.motorista.split(' - ')[0] : '---'}</span>
+                            <span className="text-[10px] text-muted font-mono">{item.motorista && item.motorista.includes('-') ? item.motorista.split(' - ')[1] : ''}</span>
+                          </div>
                         </div>
-                        <span className="text-sm font-black italic tracking-tighter" style={{ fontFamily: 'var(--font-outfit)' }}>{item.carro}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-2 text-xs font-semibold">
-                        <MapPin className="w-3.5 h-3.5 text-muted" />
-                        {item.garagem}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
-                          <User className="w-4 h-4" />
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex flex-col gap-1 max-w-[240px]">
+                          <span className="text-xs font-bold uppercase tracking-tight truncate">{item.trecho || item.linha}</span>
+                          <div className="flex items-center gap-2 text-[10px] text-muted font-medium">
+                            <span>{item.origem}</span>
+                            <div className="w-3 h-px bg-muted/30" />
+                            <span>{item.destino}</span>
+                            <span className="ml-auto opacity-50 font-mono text-[8px]">{item.linha}</span>
+                          </div>
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold leading-none mb-1">{item.motorista ? item.motorista.split(' - ')[0] : 'N/A'}</span>
-                          <span className="text-[10px] text-muted font-mono">{item.motorista && item.motorista.includes('-') ? item.motorista.split(' - ')[1] : ''}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex flex-col gap-1 max-w-[240px]">
-                        <span className="text-xs font-bold uppercase tracking-tight truncate">{item.linha}</span>
-                        <div className="flex items-center gap-2 text-[10px] text-muted font-medium">
-                          <span>{item.origem}</span>
-                          <div className="w-4 h-px bg-[var(--border)]" />
-                          <span>{item.destino}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <span className={`text-[10px] font-black px-2 py-1 rounded border ${
-                        item.servico === 'LINHA' 
-                          ? 'border-blue-500/20 bg-blue-500/5 text-blue-500' 
-                          : 'border-purple-500/20 bg-purple-500/5 text-purple-500'
-                      }`}>
-                        {item.servico}
-                      </span>
-                    </td>
-                  </motion.tr>
-
-                ))
+                      </td>
+                      <td className="px-6 py-5">
+                        <span className="text-[11px] font-black tracking-widest text-muted">{item.servico}</span>
+                      </td>
+                    </motion.tr>
+                  );
+                })
               ) : (
-                <tr>
-                  <td colSpan={6} className="px-6 py-20 text-center">
-                    <div className="flex flex-col items-center gap-3 opacity-30">
-                      <AlertCircle className="w-10 h-10" />
-                      <p className="text-sm font-bold uppercase tracking-widest">Nenhum resultado encontrado</p>
-                    </div>
-                  </td>
-                </tr>
+                <tr><td colSpan={5} className="px-6 py-20 text-center opacity-30"><AlertCircle className="w-10 h-10 mx-auto mb-2" /><p className="text-xs font-bold uppercase">Sem resultados</p></td></tr>
               )}
             </tbody>
           </table>
         </div>
       </section>
 
-      {/* Footer / Summary Info */}
-      <section className="flex items-center gap-4 text-[10px] font-bold text-muted uppercase tracking-widest">
-        <span>Total de Saídas: {escalaData.length}</span>
-        <div className="w-1 h-1 rounded-full bg-muted" />
-        <span>Imperatriz: {escalaData.filter(i => i.garagem === 'IMPERATRIZ').length}</span>
-        <div className="w-1 h-1 rounded-full bg-muted" />
-        <span>Outras Bases: {escalaData.filter(i => i.garagem !== 'IMPERATRIZ').length}</span>
+      {/* Improved Footer (Point 7) */}
+      <section className="flex flex-wrap items-center gap-8 text-[11px] font-bold text-muted uppercase tracking-[0.2em] bg-[var(--secondary)]/30 p-6 rounded-2xl border border-[var(--border)]">
+        <div className="flex items-center gap-2 text-[var(--foreground)]"><div className="w-2 h-2 rounded-full bg-blue-500" /> TOTAL: {escalaData.length}</div>
+        {Array.from(new Set(escalaData.map(i => i.garagem))).filter(Boolean).map(garagem => (
+          <div key={garagem} className="flex items-center gap-2">
+            <MapPin className="w-3 h-3" /> {garagem}: {escalaData.filter(i => i.garagem === garagem).length}
+          </div>
+        ))}
       </section>
+
+      {/* Driver Modal */}
+      {isDriverModalOpen && selectedDriverData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass max-w-md w-full p-8 rounded-3xl border border-blue-500/20 relative">
+            <button onClick={() => setIsDriverModalOpen(false)} className="absolute top-4 right-4 text-muted hover:text-[var(--foreground)]"><Plus className="w-6 h-6 rotate-45" /></button>
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-20 h-20 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 mb-2"><User className="w-10 h-10" /></div>
+              <h2 className="text-2xl font-black">{selectedDriverData.nome}</h2>
+              <p className="px-4 py-1 bg-blue-500/10 text-blue-500 text-xs font-bold rounded-full">MATRÍCULA: {selectedDriverData.matricula}</p>
+              <div className="w-full grid grid-cols-2 gap-4 mt-6 text-left">
+                <div className="glass p-4 rounded-xl">
+                  <p className="text-[10px] text-muted font-bold uppercase">Status</p>
+                  <p className="text-sm font-bold">ATIVO</p>
+                </div>
+                <div className="glass p-4 rounded-xl">
+                  <p className="text-[10px] text-muted font-bold uppercase">Filial</p>
+                  <p className="text-sm font-bold">IMPERATRIZ</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Vehicle Modal - Point 3 */}
+      {isVehicleModalOpen && selectedVehicleData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass max-w-lg w-full p-8 rounded-3xl border border-blue-500/20 relative">
+            <button onClick={() => setIsVehicleModalOpen(false)} className="absolute top-4 right-4 text-muted hover:text-[var(--foreground)]"><Plus className="w-6 h-6 rotate-45" /></button>
+            <div className="flex gap-6 items-start">
+              <div className="w-24 h-24 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 flex-shrink-0"><Bus className="w-12 h-12" /></div>
+              <div className="space-y-1">
+                <h2 className="text-3xl font-black italic tracking-tighter" style={{ fontFamily: 'var(--font-outfit)' }}>{selectedVehicleData.prefixo}</h2>
+                <div className="flex items-center gap-3">
+                  <span className="px-3 py-1 bg-[var(--secondary)] border border-[var(--border)] rounded font-mono text-xs font-bold">{selectedVehicleData.placa}</span>
+                  <span className="text-emerald-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Operacional</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 space-y-4">
+              <h3 className="text-xs font-bold text-muted uppercase tracking-widest">Última Localização (Rastreamento)</h3>
+              <div className="glass p-6 rounded-2xl border-l-4 border-emerald-500">
+                {selectedVehicleData.tracking ? (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <p className="text-xl font-bold">{selectedVehicleData.tracking.cityLocation || "Não informado"}</p>
+                        <p className="text-[10px] text-muted font-bold uppercase">Estado: {selectedVehicleData.tracking.areaName || "--"}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-mono font-bold">{selectedVehicleData.tracking.speed} km/h</p>
+                        <p className="text-[9px] text-muted">Sincronizado às {selectedVehicleData.tracking.transmissionDate?.split(' ')[1] || ""}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted italic">Dados de rastreamento não disponíveis para este prefixo.</p>
+                )}
+              </div>
+            </div>
+            
+            <div className="mt-8 flex gap-3">
+              <button onClick={() => setIsVehicleModalOpen(false)} className="flex-1 bg-white text-black font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">FECHAR DETALHES</button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Loading Overlay for Modals */}
+      {isLoadingModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
+           <RefreshCcw className="w-8 h-8 text-blue-500 animate-spin" />
+        </div>
+      )}
     </div>
   );
 }

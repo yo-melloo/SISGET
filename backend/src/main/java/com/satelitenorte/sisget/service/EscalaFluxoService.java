@@ -64,6 +64,7 @@ public class EscalaFluxoService {
                 .destino(dto.getDestino())
                 .motorista(dto.getMotorista())
                 .linha(dto.getLinha())
+                .trecho(dto.getTrecho())
                 .servico(dto.getServico())
                 .build();
     }

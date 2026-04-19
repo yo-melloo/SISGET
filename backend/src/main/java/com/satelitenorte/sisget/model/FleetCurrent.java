@@ -51,6 +51,9 @@ public class FleetCurrent {
     // DNIT: Marco Quilométrico (Enriquecido via Fase 5)
     @Column(name = "mcr_location")
     private String dnitMcr; 
+
+    @Column(name = "city_location")
+    private String cityLocation;
     
     @Column(name = "last_backend_update")
     private LocalDateTime lastBackendUpdate;

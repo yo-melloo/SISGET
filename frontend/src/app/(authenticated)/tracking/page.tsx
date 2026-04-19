@@ -56,7 +56,9 @@ export default function TrackingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const BACKEND_URL = "http://localhost:8080"; 
+  const BACKEND_URL = typeof window !== "undefined" 
+    ? `http://${window.location.hostname}:8080` 
+    : "http://localhost:8080"; 
 
   // Persistência de Filtros: Carregamento Inicial
   useEffect(() => {
@@ -88,10 +90,15 @@ export default function TrackingPage() {
 
   const fetchSyncInfo = async () => {
     try {
-      const res = await fetch(`${BACKEND_URL}/api/fleet/sync-info`);
-      const data = await res.json();
-      if (data.lastSync) setLastSync(data.lastSync);
-      if (data.autoActive !== undefined) setAutoRefresh(data.autoActive);
+      const token = localStorage.getItem("sisget_token");
+      const res = await fetch(`${BACKEND_URL}/api/fleet/sync-info`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.lastSync) setLastSync(data.lastSync);
+        if (data.autoActive !== undefined) setAutoRefresh(data.autoActive);
+      }
     } catch (e) {
       console.error("[SYNC] Falha ao obter info de sincronia:", e);
     }
@@ -99,30 +106,35 @@ export default function TrackingPage() {
 
   const loadFleet = async () => {
     try {
-      const res = await fetch(`${BACKEND_URL}/api/fleet/latest`);
-      const body = await res.json();
-      
-      const fleetData = body.fleet || [];
-      if (body.lastSync) setLastSync(body.lastSync);
+      const token = localStorage.getItem("sisget_token");
+      const res = await fetch(`${BACKEND_URL}/api/fleet/latest`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const body = await res.json();
+        
+        const fleetData = body.fleet || [];
+        if (body.lastSync) setLastSync(body.lastSync);
 
-      const parsed = fleetData.map((v: any) => ({
-        id: v.vehicleId,
-        lat: v.latitude,
-        lng: v.longitude,
-        VEICPLACA: v.plate,
-        RASTVELOCIDADE: String(v.speed),
-        FUNCNOME: v.driverName,
-        ROTANOME: v.routeName,
-        AREANOME: v.areaName,
-        STATUS: v.status,
-        RASTDATA: v.transmissionDate,
-        VEICODOMETRO: v.odometer,
-        MED_VALOR: v.fuelLevel,
-        VEICCATNOME: v.category,
-        RASTGIRO: v.rpm,
-        dnitMcr: v.dnitMcr
-      })).filter((v: FleetVehicle) => !isNaN(v.lat) && !isNaN(v.lng));
-      setFleet(parsed);
+        const parsed = fleetData.map((v: any) => ({
+          id: v.vehicleId,
+          lat: v.latitude,
+          lng: v.longitude,
+          VEICPLACA: v.plate,
+          RASTVELOCIDADE: String(v.speed),
+          FUNCNOME: v.driverName,
+          ROTANOME: v.routeName,
+          AREANOME: v.areaName,
+          STATUS: v.status,
+          RASTDATA: v.transmissionDate,
+          VEICODOMETRO: v.odometer,
+          MED_VALOR: v.fuelLevel,
+          VEICCATNOME: v.category,
+          RASTGIRO: v.rpm,
+          dnitMcr: v.dnitMcr
+        })).filter((v: FleetVehicle) => !isNaN(v.lat) && !isNaN(v.lng));
+        setFleet(parsed);
+      }
     } catch (e) {
       console.error("Erro ao carregar frota do backend:", e);
     }
@@ -131,9 +143,13 @@ export default function TrackingPage() {
   const handleToggleAuto = async () => {
     const newState = !autoRefresh;
     try {
+      const token = localStorage.getItem("sisget_token");
       const res = await fetch(`${BACKEND_URL}/api/fleet/toggle-auto`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ active: newState })
       });
       if (res.ok) {
@@ -149,13 +165,18 @@ export default function TrackingPage() {
 
   const fetchOccurrences = async () => {
     try {
-      const res = await fetch("/api/fleet/occurrences");
-      const data = await res.json();
-      const occs: Record<string, string> = {};
-      data.forEach((item: any) => {
-        occs[item.vehicleId] = item.occurrenceText;
+      const token = localStorage.getItem("sisget_token");
+      const res = await fetch("/api/fleet/occurrences", {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      setOccurrences(occs);
+      if (res.ok) {
+        const data = await res.json();
+        const occs: Record<string, string> = {};
+        data.forEach((item: any) => {
+          occs[item.vehicleId] = item.occurrenceText;
+        });
+        setOccurrences(occs);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -165,16 +186,24 @@ export default function TrackingPage() {
     setIsRefreshing(true);
     try {
         const start = Date.now();
-        const res = await fetch("/api/fleet/refresh", { method: 'POST' });
-        const result = await res.json();
+        const token = localStorage.getItem("sisget_token");
+        const res = await fetch("/api/fleet/refresh", { 
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         
-        const duration = ((Date.now() - start) / 1000).toFixed(1);
-        console.log(`[REFRESH] Bot finalizado em ${duration}s:`, result);
-        
-        await loadFleet();
-        await fetchSyncInfo();
-        await fetchOccurrences();
-        toast.success("Frota Sincronizada", { description: `Dados atualizados em ${duration}s.` });
+        if (res.ok) {
+          const result = await res.json();
+          const duration = ((Date.now() - start) / 1000).toFixed(1);
+          console.log(`[REFRESH] Bot finalizado em ${duration}s:`, result);
+          
+          await loadFleet();
+          await fetchSyncInfo();
+          await fetchOccurrences();
+          toast.success("Frota Sincronizada", { description: `Dados atualizados em ${duration}s.` });
+        } else {
+          toast.error("Falha no Comando", { description: "O servidor recusou a requisição de refresh." });
+        }
     } catch (e) {
       console.error("[REFRESH] Erro durante o processo:", e);
       toast.error("Erro na Sincronia", { description: "Verifique a conexão com o servidor de rastreamento." });
@@ -254,22 +283,34 @@ export default function TrackingPage() {
 
   const handleSaveOccurrence = (id: string, text: string) => {
     if (!text.trim()) return;
+    const token = localStorage.getItem("sisget_token");
     fetch("/api/fleet/occurrences", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
       body: JSON.stringify({ vehicleId: id, occurrenceText: text }),
-    }).then(() => {
-      setOccurrences((prev) => ({ ...prev, [id]: text }));
-      toast.success("Ocorrência Salva");
+    }).then(res => {
+      if (res.ok) {
+        setOccurrences((prev) => ({ ...prev, [id]: text }));
+        toast.success("Ocorrência Salva");
+      }
     });
   };
 
   const handleRemoveOccurrence = (id: string) => {
-    fetch(`/api/fleet/occurrences?id=${id}`, { method: "DELETE" }).then(() => {
-      const next = { ...occurrences };
-      delete next[id];
-      setOccurrences(next);
-      toast.info("Ocorrência Removida");
+    const token = localStorage.getItem("sisget_token");
+    fetch(`/api/fleet/occurrences?id=${id}`, { 
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${token}` }
+    }).then(res => {
+      if (res.ok) {
+        const next = { ...occurrences };
+        delete next[id];
+        setOccurrences(next);
+        toast.info("Ocorrência Removida");
+      }
     });
   };
 

@@ -17,4 +17,9 @@ public interface FleetCurrentRepository extends JpaRepository<FleetCurrent, Stri
     @Transactional
     @Query("UPDATE FleetCurrent f SET f.dnitMcr = :mcr WHERE f.vehicleId = :id")
     void updateMcrLocation(@org.springframework.data.repository.query.Param("id") String id, @org.springframework.data.repository.query.Param("mcr") String mcr);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE FleetCurrent f SET f.cityLocation = :city WHERE f.vehicleId = :id")
+    void updateCityLocation(@org.springframework.data.repository.query.Param("id") String id, @org.springframework.data.repository.query.Param("city") String city);
 }

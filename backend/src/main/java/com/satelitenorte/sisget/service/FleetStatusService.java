@@ -23,6 +23,7 @@ public class FleetStatusService {
     private final FleetCurrentRepository currentRepository;
     private final FleetHistoryRepository historyRepository;
     private final DnitMcrService dnitMcrService;
+    private final ReverseGeocodingService reverseGeocodingService;
 
     @Value("${sisget.internal.api-key:sisget-secret-123}")
     private String internalApiKey;

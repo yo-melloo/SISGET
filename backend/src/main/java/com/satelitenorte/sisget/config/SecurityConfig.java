@@ -36,7 +36,8 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/auth/**", "/api/health").permitAll()
+                .requestMatchers("/api/auth/**", "/api/health", "/api/search/**").permitAll()
+                .requestMatchers("/api/fleet/update-batch").permitAll() // Bot utiliza X-Internal-Key
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
@@ -65,7 +66,8 @@ public class SecurityConfig {
             "Content-Type", 
             "Accept", 
             "X-Requested-With", 
-            "Cache-Control"
+            "Cache-Control",
+            "X-Internal-Key"
         ));
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(List.of("Authorization"));

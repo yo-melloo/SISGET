@@ -14,9 +14,7 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "escala_fluxo", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"data_escala", "servico", "origem", "destino"})
-})
+@Table(name = "escala_fluxo")
 public class EscalaFluxo {
 
     @Id
@@ -52,6 +50,9 @@ public class EscalaFluxo {
 
     @Column(name = "linha")
     private String linha;
+
+    @Column(name = "trecho")
+    private String trecho;
 
     @Column(name = "servico", nullable = false)
     private String servico;

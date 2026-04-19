@@ -14,5 +14,6 @@ public class EscalaFluxoDTO {
     private String destino;
     private String motorista;
     private String linha;
+    private String trecho;
     private String servico;
 }

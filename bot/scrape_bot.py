@@ -57,6 +57,10 @@ async def push_to_backend(fleet_data: list):
             # Correção de Polaridade (Brasil: Lat < 0, Lng < 0)
             lat = float(v.get("RASTLATITUDE", 0))
             lng = float(v.get("RASTLONGITUDE", 0))
+            
+            if str(v.get("VEICPREFIXO")) == "20017":
+                print(f"DEBUG [20017] RAW: {v}")
+            
             if lat > 0: lat *= -1
             if lng > 0: lng *= -1
             
