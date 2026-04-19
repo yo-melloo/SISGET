@@ -4,6 +4,7 @@ Este é o Mapa de Conteúdo (MOC) centralizando toda a inteligência cartográfi
 
 ## 🏛️ Registros de Arquitetura (ADRs)
 Decisões que moldaram a fundação do sistema:
+- [[005-on-demand-geocoding]]: Geolocalização sob demanda e cache persistente.
 - [[006-Performance-Map-Canvas]]: Renderização de massa.
 - [[007-State-Persistence-Pattern]]: Resiliência via localStorage.
 - [[008-Unified-Operational-Dashboard]]: Design de interface de comando.

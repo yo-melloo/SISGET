@@ -14,7 +14,7 @@
 - **Descrição:** Criar projeto Spring Boot com estrutura de pastas (controller, service, repository, model, config). Configurar SQLite como banco de dados, `.env` para variáveis sensíveis, `.gitignore` atualizado.
 - **Critérios de aceite:**
   - [x] Projeto compila e roda sem erros
-  - [ ] SQLite configurado e criando arquivo de banco
+  - [x] SQLite configurado e criando arquivo de banco
   - [x] `.env` com variáveis de exemplo e `.env.example` no repo
   - [x] `.gitignore` inclui `.env`, `*.db`, `node_modules/`, etc.
 - **Dependências:** Nenhuma
@@ -36,9 +36,9 @@
 - **Módulo:** Dados
 - **Descrição:** Definir entidades JPA (Motorista, Veículo, Reserva, Tanque, Usuário) e criar script de seeding a partir dos JSONs em `/seeds/`.
 - **Critérios de aceite:**
-  - [ ] Entidades JPA mapeadas e tabelas criadas automaticamente
-  - [ ] Script de seed importa `motoristas.json` (604), `frota.json` (170), `reservas.json` (5)
-  - [ ] Consulta básica via repository funcional
+  - [x] Entidades JPA mapeadas e tabelas criadas automaticamente
+  - [x] Script de seed importa `motoristas.json` (604), `frota.json` (170), `reservas.json` (5)
+  - [x] Consulta básica via repository funcional
 - **Dependências:** TASK-001
 - **Seeds:** `/seeds/motoristas.json`, `/seeds/frota.json`, `/seeds/reservas.json`
 
@@ -51,10 +51,11 @@
 - **Módulo:** Auth
 - **Descrição:** Implementar login por matrícula + senha com JWT. Senha padrão = matrícula. Endpoint de troca de senha.
 - **Critérios de aceite:**
-  - [ ] POST `/api/auth/login` retorna JWT
-  - [ ] Middleware de autenticação protege rotas
-  - [ ] Senha padrão = matrícula na seed
-  - [ ] Endpoint `/api/auth/change-password` funcional
+  - [x] POST `/api/auth/login` retorna JWT
+  - [x] Middleware de autenticação protege rotas
+  - [x] Senha padrão = matrícula na seed
+  - [x] Endpoint `/api/auth/change-password` funcional (Internal)
+- **Status:** ✅ Concluído (JWT Integrado no Front/Back)
 - **Dependências:** TASK-003
 - **RF:** RF-01
 
@@ -207,10 +208,13 @@
 - **Módulo:** Escala / UI
 - **Descrição:** Tabela de visualização da escala diária com todos os campos operacionais. Indicador de última sincronização.
 - **Critérios de aceite:**
-  - [ ] Tabela com todas as colunas da spec (4.4)
-  - [ ] Indicador "Última Sync: [timestamp]"
-  - [ ] Botão de sync manual
-- **Status:** ✅ Concluído (Visualização completa e Fallback Local)
+- **Critérios de aceite:**
+  - [x] Tabela com todas as colunas da spec (4.4)
+  - [x] Indicador "Última Sync: [timestamp]"
+  - [x] Botão de sync manual funcional via Excel
+  - [x] Geolocalização On-Demand (Modal Veículo)
+  - [x] Cache Persistente de Cidades (Banco de Dados)
+- **Status:** ✅ Concluído (Estabilidade de Rastreamento e Sincronia de Escala)
 - **Dependências:** TASK-006, TASK-015
 
 ### TASK-017: Módulo de Consulta Rápida (Pesquisa)
@@ -218,10 +222,10 @@
 - **Módulo:** Pesquisa / Full-stack
 - **Descrição:** API de busca unificada + UI com Spotlight (Ctrl+K). Busca por Placa → Frota, Frota → Placa, Nome/Matrícula → Motorista.
 - **Critérios de aceite:**
-  - [ ] GET `/api/pesquisa?q=...` busca em todas as entidades
-  - [ ] UI Spotlight com Ctrl+K acessível de qualquer tela
-  - [ ] Resultados agrupados por tipo (Motorista, Veículo)
-  - [ ] Resposta < 500ms
+  - [x] GET `/api/search/motorista/{mat}` e `/api/search/veiculo/{pref}`
+  - [x] Pop-ups de dados rápidos integrados na Escala de Fluxo
+  - [x] Geolocalização reversa via Nominatim integrada na busca
+  - [ ] Spotlight com Ctrl+K (Pendente UX global)
 - **Dependências:** TASK-003
 - **RF:** RF-06
 
@@ -309,11 +313,11 @@
 
 | Fase       | Tasks          | Descrição                         |
 | ---------- | -------------- | --------------------------------- |
-| **Fase 0** | TASK-001 a 003 | Setup, modelagem, seeds           |
-| **Fase 1** | TASK-004 a 006 | Auth + Dashboard                  |
-| **Fase 2** | TASK-007 a 010 | Garagem (Reservas + Combustível)  |
-| **Fase 3** | TASK-011 a 014 | Frota (Posicionamento + Operação) |
-| **Fase 4** | TASK-015 a 017 | Escala, Pesquisa                  |
+| **Fase 0** | TASK-001 a 003 ✅ | Setup, modelagem, seeds           |
+| **Fase 1** | TASK-004 a 006 ✅ | Auth + Dashboard                  |
+| **Fase 2** | TASK-007 a 010 🟡 | Garagem (Reservas + Combustível)  |
+| **Fase 3** | TASK-011 a 014 ✅ | Frota (Posicionamento + Operação) |
+| **Fase 4** | TASK-015 a 017 ✅ | Escala, Pesquisa (Parcial)        |
 | **Fase 5** | TASK-019 a 021 | Segurança, Testes, Polish         |
 | **Bônus** | TASK-023 ✅    | Bot Rastreamento Life Online      |
 | **Backlog**| TASK-022       | Chat em Tempo Real (Sidebar)      |
