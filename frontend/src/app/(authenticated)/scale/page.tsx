@@ -151,7 +151,16 @@ export default function ScalePage() {
     try {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const targetSheetName = workbook.SheetNames.find((name) =>
+        /IMP(ERATRIZ)?/i.test(name)
+      );
+      if (!targetSheetName) {
+        throw new Error(
+          `Nenhuma aba com 'IMP' ou 'IMPERATRIZ' foi encontrada nesta planilha.\n` +
+          `Abas disponíveis: ${workbook.SheetNames.join(", ")}`
+        );
+      }
+      const sheet = workbook.Sheets[targetSheetName];
       const rows = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, raw: false, dateNF: "yyyy-mm-dd" });
       
       if (rows.length < 2) throw new Error("A planilha parece estar vazia.");
@@ -164,22 +173,49 @@ export default function ScalePage() {
         const row = rows[i];
         if (!row || row.length === 0) continue;
 
+        // Filtro de BASE: ignora registros que não sejam da base IMPERATRIZ (coluna C)
+        const base = String(row[2] || "").trim().toUpperCase();
+        if (base && !base.includes("IMPERATRIZ")) continue;
+
+        const normalizeDate = (val: any): string => {
+          if (!val) return lastData;
+          let s = String(val).trim();
+          if (!s || s.toLowerCase() === 'undefined') return lastData;
+
+          // Caso 1: Já está em formato ISO (YYYY-MM-DD)
+          if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+          // Caso 2: Serial de Excel (ex: "45345")
+          if (/^\d{5}$/.test(s)) {
+            const date = new Date(Math.round((Number(s) - 25569) * 86400 * 1000));
+            return date.toISOString().split('T')[0];
+          }
+
+          // Caso 3: Separadores comuns (/, -, .)
+          const sepMatch = s.match(/[.\/-]/);
+          if (sepMatch) {
+            const sep = sepMatch[0];
+            const parts = s.split(sep);
+            if (parts.length === 3) {
+              let d = parts[0], m = parts[1], y = parts[2];
+              // Se o primeiro campo for o ano (YYYY)
+              if (d.length === 4) [d, y] = [y, d];
+              // Tenta detectar MM/DD vs DD/MM
+              if (parseInt(d) <= 12 && parseInt(m) > 12) [d, m] = [m, d];
+              if (y.length === 2) y = "20" + y;
+              return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+            }
+          }
+          return s || lastData;
+        };
+
         const diaSemana = (row[0] || lastDiaSemana);
-        let dataVal = (row[1] || lastData);
+        const dataVal = normalizeDate(row[1]);
+        
         lastDiaSemana = diaSemana;
-        lastData = dataVal;
+        if (dataVal) lastData = dataVal;
 
         if (!dataVal) continue;
-        
-        if (dataVal.includes("/")) {
-           const parts = dataVal.split("/");
-           if (parts.length === 3) {
-             let d = parts[0], m = parts[1], y = parts[2];
-             if (parseInt(d) <= 12 && parseInt(m) > 12) [d, m] = [m, d];
-             if (y.length === 2) y = "20" + y;
-             dataVal = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-           }
-        }
 
         const formatTime = (t: any) => {
           if (!t) return null;
