@@ -23,7 +23,7 @@ public class WeatherService {
         String url = UriComponentsBuilder.fromHttpUrl(BASE_URL)
                 .queryParam("latitude", lat)
                 .queryParam("longitude", lon)
-                .queryParam("current_weather", true)
+                .queryParam("current", "temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day")
                 .toUriString();
 
         try {

@@ -21,6 +21,13 @@ Conceitos interligados e detalhes técnicos:
 - [[Unified_Fullscreen_Dashboard]]: Engenharia de z-index e layout.
 - [[Modulo-Notificacoes]]: Sincronia de eventos táticos.
 
+## 🚀 Funcionalidades & Status
+- [x] Integração com NASA GIBS (Migrado para OWM devido a limitações de zoom)
+- [x] Integração com OpenWeatherMap (Tiles High-Res) [[2026-04-21-Weather-Integration]]
+- [x] Radar de Chuva Dinâmico (OWM)
+- [x] Proteção de Cota via Timer Visual (120s)
+- [ ] Histórico de Alertas Meteorológicos percurso-carro
+
 ## 📚 Documentação Base
 - [[000-PRD-SISGET]]: Visão de Produto.
 - [[001-Especificação Técnica - Sistema de Gerenciamento de Tráfego (SISGET WEB)]]: Requisitos de engenharia.

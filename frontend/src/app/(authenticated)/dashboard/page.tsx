@@ -18,7 +18,10 @@ import {
   Wrench,
   X,
   Plus,
-  Trash2
+  Trash2,
+  Wind,
+  Droplets,
+  Timer
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -133,14 +136,66 @@ function DutyModal({ open, items, onClose, onSave }: { open: boolean, items: str
   );
 }
 
+function WeatherModal({ open, weather, onClose }: { open: boolean, weather: any, onClose: () => void }) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="glass w-full max-w-sm p-8 rounded-[2.5rem] z-10 relative overflow-hidden">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-xl font-black tracking-tight">Clima em Detalhes</h2>
+            <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">Imperatriz (ITZ)</p>
+          </div>
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--secondary)] text-muted hover:text-white transition-colors">
+            <X className="w-5 h-5"/>
+          </button>
+        </div>
+
+        <div className="flex flex-col items-center justify-center mb-10 py-6">
+          <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-amber-500/20 to-orange-600/20 flex items-center justify-center text-amber-500 mb-4 shadow-2xl">
+            <weather.icon className={`w-10 h-10 ${weather.description === "Carregando clima..." ? "animate-bounce" : ""}`} />
+          </div>
+          <div className="text-5xl font-black italic tracking-tighter mb-2">{weather.temp}°C</div>
+          <div className="text-sm font-bold text-muted uppercase tracking-widest">{weather.description}</div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="glass-light p-5 rounded-3xl flex flex-col items-center text-center">
+            <Droplets className="w-5 h-5 text-blue-500 mb-2" />
+            <div className="text-lg font-black">{weather.humidity}%</div>
+            <div className="text-[10px] font-bold text-muted uppercase">Umidade</div>
+          </div>
+          <div className="glass-light p-5 rounded-3xl flex flex-col items-center text-center">
+            <Wind className="w-5 h-5 text-emerald-500 mb-2" />
+            <div className="text-lg font-black">{weather.windspeed} km/h</div>
+            <div className="text-[10px] font-bold text-muted uppercase">Vento</div>
+          </div>
+        </div>
+
+        <div className="mt-8 p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center gap-3">
+          <Timer className="w-4 h-4 text-blue-500" />
+          <p className="text-[9px] font-bold text-blue-400 uppercase tracking-widest leading-relaxed">
+            Dados atualizados via Open-Meteo para a base ITZ.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [user, setUser] = useState({ name: "AUXILIAR" });
   const [date, setDate] = useState("");
   const [stats, setStats] = useState(initialStats);
   const [isDutyModalOpen, setIsDutyModalOpen] = useState(false);
-  const [weather, setWeather] = useState<{ temp: number; description: string; icon: any }>({
+  const [isWeatherModalOpen, setIsWeatherModalOpen] = useState(false);
+  const [weather, setWeather] = useState<{ temp: number; description: string; humidity: number; windspeed: number; icon: any }>({
     temp: 28,
     description: "Carregando clima...",
+    humidity: 0,
+    windspeed: 0,
     icon: CloudSun
   });
 
@@ -189,11 +244,22 @@ export default function Dashboard() {
         });
         if (res.ok) {
           const data = await res.json();
-          const current = data.current_weather;
-          const config = weatherMap[current.weathercode] || { desc: "Condição desconhecida", icon: CloudSun };
+          // Suporte resiliente para DTO antigo e novo
+          const current = data.current || data.current_weather;
+          
+          if (!current) {
+            console.warn("Estrutura de clima desconhecida:", data);
+            return;
+          }
+
+          const weatherCode = current.weather_code ?? current.weathercode;
+          const config = weatherMap[weatherCode] || { desc: "Condição desconhecida", icon: CloudSun };
+          
           setWeather({
-            temp: Math.round(current.temperature),
+            temp: Math.round(current.temperature_2m ?? current.temperature ?? 0),
             description: config.desc,
+            humidity: current.relative_humidity_2m ?? 0,
+            windspeed: Math.round(current.wind_speed_10m ?? current.windspeed ?? 0),
             icon: config.icon
           });
         }
@@ -229,9 +295,12 @@ export default function Dashboard() {
           <p className="text-muted capitalize">{date}</p>
         </div>
         
-        <div className="glass flex items-center gap-4 p-4 rounded-xl border border-white/5 hover:border-blue-500/20 transition-all">
-          <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
-            <weather.icon className="w-6 h-6 animate-pulse" />
+        <div 
+          onClick={() => setIsWeatherModalOpen(true)}
+          className="glass flex items-center gap-4 p-4 rounded-xl border border-white/5 hover:border-blue-500/20 transition-all cursor-pointer group active:scale-95"
+        >
+          <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-all">
+            <weather.icon className={`w-6 h-6 ${weather.description === "Carregando clima..." ? "animate-bounce" : ""}`} />
           </div>
           <div>
             <div className="text-sm font-medium">{weather.temp}°C em Imperatriz</div>
@@ -239,6 +308,12 @@ export default function Dashboard() {
           </div>
         </div>
       </section>
+
+      <WeatherModal 
+        open={isWeatherModalOpen} 
+        weather={weather} 
+        onClose={() => setIsWeatherModalOpen(false)} 
+      />
 
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {stats.map((stat, i) => (

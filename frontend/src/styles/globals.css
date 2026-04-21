@@ -67,6 +67,17 @@ body {
   border-radius: 16px;
 }
 
+.glass-light {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dark .glass-light {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 .btn-primary {
   background: var(--primary);
   color: white;

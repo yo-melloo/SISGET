@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { useLayout } from "./LayoutContext";
 import Notifications from "./Notifications";
+import Clock from "./Clock";
 
 export default function Navbar() {
   const [userName, setUserName] = useState("AUXILIAR");
@@ -55,6 +56,7 @@ export default function Navbar() {
       </div>
 
       <div className="flex items-center gap-6">
+        <Clock />
         <div className="flex items-center gap-2 relative">
           <button 
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
