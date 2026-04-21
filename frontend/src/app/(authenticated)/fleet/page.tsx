@@ -61,6 +61,7 @@ interface Operacao {
   turno: Turno;
   lat?: number;
   lng?: number;
+  distance?: number;
 }
 
 interface FleetNote {
@@ -744,9 +745,8 @@ function OpTab({ data, occurrences, lastSync }: { data: Operacao[]; occurrences:
             <thead>
               <tr className="border-b border-[var(--border)] bg-[var(--secondary)]/30">
                 {["Saída", "Serviço", "Frota", "Placa", "Motorista", "Mat.", "Linha", "Localização", "Previsão"].map(h => (
-                  <th key={h} className="text-left px-4 py-4 text-[10px] font-bold text-muted uppercase tracking-wider">{h}</th>
+                  <th key={h} className="text-left px-4 py-4 text-[11px] font-bold text-muted uppercase tracking-wider">{h}</th>
                 ))}
-                <th className="px-4 py-4" />
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
@@ -755,6 +755,9 @@ function OpTab({ data, occurrences, lastSync }: { data: Operacao[]; occurrences:
               ) : (
                 filtered.map(o => {
                   const isCancelled = (o.frota || "").toUpperCase().includes("CANCELADO") || o.localizacao === "CANCELADO";
+                  const isGaragem = o.previsaoITZ === "GARAGEM";
+                  const hasTelemetry = o.previsaoITZ !== "--" && !isCancelled;
+                  
                   return (
                     <tr key={o.id} className={`hover:bg-[var(--secondary)] transition-colors group ${isCancelled ? "bg-red-500/10" : ""}`}>
                       <td className={`px-4 py-3 font-bold font-mono text-sm ${isCancelled ? "text-red-500" : ""}`}>{o.saida}</td>
@@ -765,10 +768,19 @@ function OpTab({ data, occurrences, lastSync }: { data: Operacao[]; occurrences:
                       <td className="px-4 py-3 text-muted font-mono">{o.motoristaMat}</td>
                       <td className="px-4 py-3 text-muted truncate max-w-[200px]">{o.linha}</td>
                       <td className="px-4 py-3"><LocationCell initial={o.localizacao} prefixo={o.frota} /></td>
-                      <td className={`px-4 py-3 font-mono text-[10px] font-bold ${isCancelled ? "text-red-400" : "text-indigo-400"}`}>{o.previsaoITZ}</td>
                       <td className="px-4 py-3">
-                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button type="button" onClick={() => openEdit(o)} className="p-1.5 rounded-lg hover:bg-blue-500/10 text-blue-500 transition-colors"><Pencil className="w-4 h-4" /></button>
+                        <div className="flex flex-col gap-1.5">
+                          {isGaragem ? (
+                            <span className="text-[12px] font-black bg-emerald-500/20 text-emerald-500 px-3 py-1.5 rounded-full w-fit animate-pulse">GARAGEM</span>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              {hasTelemetry && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-lg shadow-blue-500/50" />}
+                              <span className={`font-mono text-lg font-black tracking-tighter ${isCancelled ? "text-red-400" : "text-blue-400"}`}>{o.previsaoITZ}</span>
+                            </div>
+                          )}
+                          {hasTelemetry && o.distance != null && !isGaragem && (
+                            <span className="text-[11px] text-muted font-bold font-mono leading-none">{o.distance.toFixed(1)} km dist.</span>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -876,16 +888,34 @@ export default function FleetPage() {
     const hora = parseInt(hSaidaStr.split(":")[0]) || 0;
     const turno: Turno = (hora >= 18 || hora < 5) ? "NOTURNO" : "DIURNO";
     const tracking = fleetTracking.find(f => (f.vehicleId || "").trim() === (item.carro || "").trim());
+    
     let localizacao = tracking?.cityLocation || "N/I";
-    if ((item.carro||"").toUpperCase().includes("CANCELADO")) localizacao = "CANCELADO";
-    else if (tracking && (tracking.speed||0) === 0 && (tracking.cityLocation||"").toUpperCase().includes("GARAGEM")) localizacao = "GARAGEM";
+    let previsaoITZ = item.previsaoITZ || "--";
+
+    if ((item.carro||"").toUpperCase().includes("CANCELADO")) {
+      localizacao = "CANCELADO";
+      previsaoITZ = "--";
+    } else if (tracking) {
+      if (tracking.distanceToITZ != null) {
+        if (tracking.distanceToITZ < 3.0) {
+          localizacao = "GARAGEM";
+          previsaoITZ = "GARAGEM";
+        } else if (tracking.etaMinutes != null) {
+          // Converte minutos de ETA para o horário de parede (Wall Clock)
+          const arrival = new Date();
+          arrival.setMinutes(arrival.getMinutes() + tracking.etaMinutes);
+          previsaoITZ = arrival.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+        }
+      }
+    }
     
     return {
       id: item.id || idx, saida: (item.horarioSaida || "--:--").substring(0, 5), servico: item.servico || "LINHA",
       frota: item.carro || "N/I", placa: "--", motoristaNome: (item.motorista || "").split("-")[0]?.trim() || "N/I",
       motoristaMat: (item.motorista || "").split("-")[1]?.trim() || "", linha: item.linha || item.trecho || "N/I",
-      localizacao: localizacao.toUpperCase(), previsaoITZ: "--", turno,
-      lat: tracking?.latitude, lng: tracking?.longitude
+      localizacao: localizacao.toUpperCase(), previsaoITZ, turno,
+      lat: tracking?.latitude, lng: tracking?.longitude,
+      distance: tracking?.distanceToITZ
     };
   });
 

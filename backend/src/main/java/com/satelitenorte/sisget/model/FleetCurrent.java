@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.*;
 
+import jakarta.persistence.Transient;
 import java.time.LocalDateTime;
 
 @Entity
@@ -57,4 +58,10 @@ public class FleetCurrent {
     
     @Column(name = "last_backend_update")
     private LocalDateTime lastBackendUpdate;
+
+    @Transient
+    private Double distanceToITZ;
+
+    @Transient
+    private Long etaMinutes;
 }

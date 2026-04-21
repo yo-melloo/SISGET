@@ -24,6 +24,7 @@ public class FleetStatusService {
     private final FleetHistoryRepository historyRepository;
     private final DnitMcrService dnitMcrService;
     private final ReverseGeocodingService reverseGeocodingService;
+    private final ETACalculatorService etaCalculatorService;
 
     @Value("${sisget.internal.api-key:sisget-secret-123}")
     private String internalApiKey;
@@ -184,7 +185,15 @@ public class FleetStatusService {
 
     public List<FleetCurrent> getAllLatest() {
         try {
-            return currentRepository.findAll();
+            List<FleetCurrent> all = currentRepository.findAll();
+            for (FleetCurrent f : all) {
+                if (f.getLatitude() != null && f.getLongitude() != null) {
+                    double dist = etaCalculatorService.calculateDistance(f.getLatitude(), f.getLongitude());
+                    f.setDistanceToITZ(dist);
+                    f.setEtaMinutes(etaCalculatorService.estimateTravelTime(dist, f.getSpeed()));
+                }
+            }
+            return all;
         } catch (Exception e) {
             log.error("[DB] Erro ao buscar lista de frota: {}", e.getMessage());
             return List.of();
