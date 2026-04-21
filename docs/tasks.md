@@ -25,5 +25,11 @@
 - [x] **9. Controle de Exibição Dinâmico:** Combobox Multi-select por Base/Rota/Veículo.
 - [x] **10. Implementação do MCR (Módulo de Contexto Rodoviário):** DNIT funcional.
 
+
+## 📋 Backlog: Módulo de Controle de Frota (Operação)
+- [ ] **19. Módulo de Anotações (Card Outros):** Implementar sistema de persistência (CRUD) para anotações rápidas e observações operacionais vinculadas ao dia.
+- [ ] **20. Histórico de Notas:** Visualização retroativa de anotações por data e escala.
+- [ ] **21. Integração Modal:** Adicionar botão de edição no card "Outros" para abertura de editor de texto rico ou simples.
+
 ---
-**Status:** CICLO v2.0 CONCLUÍDO. Dashboard Operativo Completo.
+**Status:** CICLO v2.0 CONCLUÍDO. Iniciando planejamento v2.1 (Anotações e Auditoria).

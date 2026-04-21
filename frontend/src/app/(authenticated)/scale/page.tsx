@@ -47,7 +47,10 @@ export default function ScalePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSync, setLastSync] = useState("-");
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  });
   const [escalaData, setEscalaData] = useState<EscalaItem[]>([]);
   const [filteredEscala, setFilteredEscala] = useState<EscalaItem[]>([]);
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: 'ascending' });
@@ -246,8 +249,8 @@ export default function ScalePage() {
           origem: cleanStr(row[6]),
           destino: cleanStr(row[7]),
           motorista: cleanStr(row[8]),
-          trecho: cleanStr(row[9]),  // Invertido conforme Point 8
-          linha: cleanStr(row[10]),   // Invertido conforme Point 8
+          trecho: "", // Ignorado conforme orientação (Coluna J)
+          linha: cleanStr(row[10]),   // Coluna K
           servico: cleanStr(row[11])
         });
       }

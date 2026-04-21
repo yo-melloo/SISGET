@@ -31,6 +31,48 @@ public class FleetStatusService {
     private final AtomicBoolean autoRefreshActive = new AtomicBoolean(false);
     private LocalDateTime lastGlobalSync = LocalDateTime.now();
 
+    // Fila para geocodificação sequencial (Evita 429 Nominatim)
+    private final java.util.concurrent.BlockingQueue<String> geocodingQueue = new java.util.concurrent.LinkedBlockingQueue<>();
+    private final java.util.concurrent.ExecutorService geocodingExecutor = java.util.concurrent.Executors.newSingleThreadExecutor();
+
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        geocodingExecutor.submit(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    String vehicleId = geocodingQueue.take();
+                    log.info("[GEO-QUEUE] Processando enriquecimento para: {}", vehicleId);
+                    
+                    currentRepository.findById(vehicleId).ifPresent(fleet -> {
+                        if (fleet.getLatitude() != null && fleet.getLongitude() != null) {
+                            try {
+                                String city = reverseGeocodingService.getCityFromCoords(fleet.getLatitude(), fleet.getLongitude());
+                                if (city != null && !city.equals("Local Indeterminado")) {
+                                    reverseGeocodingService.saveCityLocation(vehicleId, city);
+                                    log.info("[GEO-QUEUE] Sucesso: {} -> {}", vehicleId, city);
+                                }
+                                // Delay para respeitar rate limit (1 req/sec)
+                                Thread.sleep(1100); 
+                            } catch (Exception e) {
+                                log.error("[GEO-QUEUE] Falha ao geocodificar {}: {}", vehicleId, e.getMessage());
+                            }
+                        }
+                    });
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception e) {
+                    log.error("[GEO-QUEUE] Erro inesperado na fila: {}", e.getMessage());
+                }
+            }
+        });
+    }
+
+    @jakarta.annotation.PreDestroy
+    public void shutdown() {
+        geocodingExecutor.shutdownNow();
+    }
+
     public boolean validateApiKey(String key) {
         return internalApiKey.equals(key);
     }
@@ -61,12 +103,30 @@ public class FleetStatusService {
                 // 1. Verifica se houve mudança significativa para logar no histórico
                 Optional<FleetCurrent> existingOpt = currentRepository.findById(incoming.getVehicleId());
                 
-                // Dispara enriquecimento de MCR em background (DNIT)
+                // Dispara enriquecimento de MCR e Geocodificação em background
                 if (incoming.getLatitude() != null && incoming.getLongitude() != null) {
                     try {
                         dnitMcrService.enrichAndSaveMcr(incoming.getVehicleId(), incoming.getLatitude(), incoming.getLongitude());
+                        
+                        // Busca o estado atual para ver se já temos endereço
+                        boolean needsGeo = true;
+                        if (existingOpt.isPresent()) {
+                            FleetCurrent existing = existingOpt.get();
+                            // Se já tem endereço e mudou quase nada (50m), não precisa re-geocodificar
+                            if (existing.getCityLocation() != null && 
+                                Math.abs(existing.getLatitude() - incoming.getLatitude()) < 0.0005 &&
+                                Math.abs(existing.getLongitude() - incoming.getLongitude()) < 0.0005) {
+                                needsGeo = false;
+                            }
+                        }
+
+                        if (needsGeo) {
+                            if (!geocodingQueue.contains(incoming.getVehicleId())) {
+                                geocodingQueue.offer(incoming.getVehicleId());
+                            }
+                        }
                     } catch (Exception e) {
-                        log.warn("[MCR] Falha ao disparar enriquecimento assíncrono para {}: {}", incoming.getVehicleId(), e.getMessage());
+                        log.warn("[ENRICH] Falha ao disparar enriquecimento para {}: {}", incoming.getVehicleId(), e.getMessage());
                     }
                 }
                 
