@@ -9,6 +9,11 @@ import {
   AlertCircle, 
   CheckCircle2,
   CloudSun,
+  Cloud,
+  CloudRain,
+  CloudLightning,
+  Sun,
+  CloudFog,
   Users,
   Wrench,
   X,
@@ -133,6 +138,32 @@ export default function Dashboard() {
   const [date, setDate] = useState("");
   const [stats, setStats] = useState(initialStats);
   const [isDutyModalOpen, setIsDutyModalOpen] = useState(false);
+  const [weather, setWeather] = useState<{ temp: number; description: string; icon: any }>({
+    temp: 28,
+    description: "Carregando clima...",
+    icon: CloudSun
+  });
+
+  const weatherMap: Record<number, { desc: string; icon: any }> = {
+    0: { desc: "Céu limpo", icon: Sun },
+    1: { desc: "Principalmente limpo", icon: Sun },
+    2: { desc: "Parcialmente nublado", icon: CloudSun },
+    3: { desc: "Nublado", icon: Cloud },
+    45: { desc: "Nevoeiro", icon: CloudFog },
+    48: { desc: "Nevoeiro rime", icon: CloudFog },
+    51: { desc: "Garoa leve", icon: CloudRain },
+    53: { desc: "Garoa moderada", icon: CloudRain },
+    55: { desc: "Garoa densa", icon: CloudRain },
+    61: { desc: "Chuva leve", icon: CloudRain },
+    63: { desc: "Chuva moderada", icon: CloudRain },
+    65: { desc: "Chuva forte", icon: CloudRain },
+    80: { desc: "Pancadas de chuva leves", icon: CloudRain },
+    81: { desc: "Pancadas de chuva moderadas", icon: CloudRain },
+    82: { desc: "Pancadas de chuva violentas", icon: CloudRain },
+    95: { desc: "Trovoada", icon: CloudLightning },
+    96: { desc: "Trovoada com granizo leve", icon: CloudLightning },
+    99: { desc: "Trovoada com granizo forte", icon: CloudLightning },
+  };
 
   useEffect(() => {
     const savedUser = localStorage.getItem("sisget_user");
@@ -145,6 +176,35 @@ export default function Dashboard() {
       month: 'long', 
       day: 'numeric' 
     }));
+
+    const fetchWeather = async () => {
+      try {
+        const token = localStorage.getItem("sisget_token");
+        const BACKEND_URL = typeof window !== "undefined" 
+          ? `http://${window.location.hostname}:8080` 
+          : "http://localhost:8080";
+
+        const res = await fetch(`${BACKEND_URL}/api/weather/current`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const current = data.current_weather;
+          const config = weatherMap[current.weathercode] || { desc: "Condição desconhecida", icon: CloudSun };
+          setWeather({
+            temp: Math.round(current.temperature),
+            description: config.desc,
+            icon: config.icon
+          });
+        }
+      } catch (e) {
+        console.error("Erro ao buscar clima:", e);
+      }
+    };
+
+    fetchWeather();
+    const interval = setInterval(fetchWeather, 15 * 60 * 1000); // 15 min
+    return () => clearInterval(interval);
   }, []);
 
   const handleUpdateDuty = (newItems: string[]) => {
@@ -169,13 +229,13 @@ export default function Dashboard() {
           <p className="text-muted capitalize">{date}</p>
         </div>
         
-        <div className="glass flex items-center gap-4 p-4 rounded-xl">
+        <div className="glass flex items-center gap-4 p-4 rounded-xl border border-white/5 hover:border-blue-500/20 transition-all">
           <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
-            <CloudSun className="w-6 h-6" />
+            <weather.icon className="w-6 h-6 animate-pulse" />
           </div>
           <div>
-            <div className="text-sm font-medium">28°C em Imperatriz</div>
-            <div className="text-xs text-muted italic">Parcialmente nublado</div>
+            <div className="text-sm font-medium">{weather.temp}°C em Imperatriz</div>
+            <div className="text-xs text-muted italic capitalize">{weather.description}</div>
           </div>
         </div>
       </section>

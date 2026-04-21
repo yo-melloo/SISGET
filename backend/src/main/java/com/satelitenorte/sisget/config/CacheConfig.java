@@ -12,8 +12,11 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager();
-        cacheManager.setCacheNames(List.of("city-locations"));
+        org.springframework.cache.caffeine.CaffeineCacheManager cacheManager = new org.springframework.cache.caffeine.CaffeineCacheManager();
+        cacheManager.setCaffeine(com.github.benmanes.caffeine.cache.Caffeine.newBuilder()
+                .expireAfterWrite(15, java.util.concurrent.TimeUnit.MINUTES)
+                .maximumSize(100));
+        cacheManager.setCacheNames(List.of("city-locations", "weather"));
         return cacheManager;
     }
 }

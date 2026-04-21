@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
-import { Search, Loader2, X, RefreshCw, Bell, MapPin, LocateFixed, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Loader2, X, RefreshCw, Bell, MapPin, LocateFixed, ChevronLeft, ChevronRight, CloudSun, Cloud, CloudRain, CloudLightning, Sun, CloudFog } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useMemo, useRef } from "react";
 import { toast } from "sonner";
@@ -55,6 +55,29 @@ export default function TrackingPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [vehicleWeather, setVehicleWeather] = useState<{ temp: number; description: string; icon: any } | null>(null);
+  const [isLoadingWeather, setIsLoadingWeather] = useState(false);
+
+  const weatherMap: Record<number, { desc: string; icon: any }> = {
+    0: { desc: "Céu limpo", icon: Sun },
+    1: { desc: "Principalmente limpo", icon: Sun },
+    2: { desc: "Parcialmente nublado", icon: CloudSun },
+    3: { desc: "Nublado", icon: Cloud },
+    45: { desc: "Nevoeiro", icon: CloudFog },
+    48: { desc: "Nevoeiro rime", icon: CloudFog },
+    51: { desc: "Garoa leve", icon: CloudRain },
+    53: { desc: "Garoa moderada", icon: CloudRain },
+    55: { desc: "Garoa densa", icon: CloudRain },
+    61: { desc: "Chuva leve", icon: CloudRain },
+    63: { desc: "Chuva moderada", icon: CloudRain },
+    65: { desc: "Chuva forte", icon: CloudRain },
+    80: { desc: "Pancadas de chuva leves", icon: CloudRain },
+    81: { desc: "Pancadas de chuva moderadas", icon: CloudRain },
+    82: { desc: "Pancadas de chuva violentas", icon: CloudRain },
+    95: { desc: "Trovoada", icon: CloudLightning },
+    96: { desc: "Trovoada com granizo leve", icon: CloudLightning },
+    99: { desc: "Trovoada com granizo forte", icon: CloudLightning },
+  };
 
   const BACKEND_URL = typeof window !== "undefined" 
     ? `http://${window.location.hostname}:8080` 
@@ -225,6 +248,44 @@ export default function TrackingPage() {
     return () => clearInterval(interval);
   }, []);
 
+  const selectedVehicle = useMemo(() => 
+    fleet.find(v => v.id === selectedCar), 
+    [fleet, selectedCar]
+  );
+
+  // Fetch Weather for selected vehicle
+  useEffect(() => {
+    if (selectedVehicle && selectedVehicle.lat && selectedVehicle.lng) {
+      const fetchVehicleWeather = async () => {
+        setIsLoadingWeather(true);
+        try {
+          const token = localStorage.getItem("sisget_token");
+          const res = await fetch(`${BACKEND_URL}/api/weather/current?lat=${selectedVehicle.lat}&lon=${selectedVehicle.lng}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const current = data.current_weather;
+            const config = weatherMap[current.weathercode] || { desc: "Condição desconhecida", icon: CloudSun };
+            setVehicleWeather({
+              temp: Math.round(current.temperature),
+              description: config.desc,
+              icon: config.icon
+            });
+          }
+        } catch (e) {
+          console.error("Erro ao buscar clima do veículo:", e);
+        } finally {
+          setIsLoadingWeather(false);
+        }
+      };
+      
+      fetchVehicleWeather();
+    } else {
+      setVehicleWeather(null);
+    }
+  }, [selectedVehicle?.id]);
+
   const filterOptions = useMemo<FilterOption[]>(() => {
     const vehicles = fleet
       .sort((a, b) => a.id.localeCompare(b.id))
@@ -333,11 +394,6 @@ export default function TrackingPage() {
     document.addEventListener("fullscreenchange", handleFsChange);
     return () => document.removeEventListener("fullscreenchange", handleFsChange);
   }, []);
-
-  const selectedVehicle = useMemo(() => 
-    fleet.find(v => v.id === selectedCar), 
-    [fleet, selectedCar]
-  );
 
   if (!mounted) return (
     <div className="flex items-center justify-center h-screen bg-[var(--background)]">
@@ -508,6 +564,12 @@ export default function TrackingPage() {
                    <p className="text-[10px] font-black uppercase text-[var(--foreground-muted)] tracking-widest">{selectedVehicle?.VEICPLACA} • {selectedVehicle?.VEICCATNOME}</p>
                 </div>
                  <div className="flex items-center gap-2">
+                    {vehicleWeather && (
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--secondary)] border border-[var(--border)] animate-in fade-in zoom-in duration-500">
+                         <vehicleWeather.icon className="w-4 h-4 text-amber-500" />
+                         <span className="text-[10px] font-black text-[var(--foreground)]">{vehicleWeather.temp}°C</span>
+                      </div>
+                    )}
                    <button 
                      onClick={() => setLockFocus(!lockFocus)}
                      className={`p-2 rounded-full transition-all ${lockFocus ? 'bg-blue-500/10 text-blue-500 shadow-inner' : 'hover:bg-[var(--secondary)] text-[var(--foreground-muted)]'}`}

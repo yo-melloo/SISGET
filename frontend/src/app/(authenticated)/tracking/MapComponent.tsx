@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip, useMap, useMapEvents } from "react-leaflet";
-import { Map as MapIcon, Satellite, Layers, CarFront, Moon, Sun, CloudMoon, Maximize, Minimize, LocateFixed } from "lucide-react";
+import { Map as MapIcon, Satellite, Layers, CarFront, Moon, Sun, CloudMoon, Maximize, Minimize, LocateFixed, CloudSun, CloudFog } from "lucide-react";
+import RainViewerLayer from "./RainViewerLayer";
+import NasaSatelliteLayer from "./NasaSatelliteLayer";
 import "leaflet/dist/leaflet.css";
 import { toast } from "sonner";
 
@@ -63,6 +65,8 @@ export default function MapComponent({
   const mapRef = useRef<any>(null);
   const [mapView, setMapView] = useState<MapView | 'dark'>('standard');
   const [showTraffic, setShowTraffic] = useState(false);
+  const [showWeather, setShowWeather] = useState(false);
+  const [showSatellite, setShowSatellite] = useState(false);
   const [centerClickCount, setCenterClickCount] = useState(0);
 
   // Re-validar tamanho do mapa quando a sidebar mudar
@@ -161,6 +165,8 @@ export default function MapComponent({
         {showTraffic && (
           <TileLayer url={trafficTile} opacity={0.7} />
         )}
+        {showWeather && <RainViewerLayer />}
+        {showSatellite && <NasaSatelliteLayer />}
 
         <FocusMap selectedCar={selectedCar} fleet={fleet} customFocus={customFocus} lockFocus={lockFocus} />
         <MapEvents />
@@ -265,6 +271,24 @@ export default function MapComponent({
         >
           <CarFront className="w-5 h-5" />
           <span className={`absolute left-14 bg-black/80 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none uppercase tracking-widest whitespace-nowrap`}>Trânsito: {showTraffic ? 'ON' : 'OFF'}</span>
+        </button>
+
+        <button 
+          onClick={() => setShowWeather(!showWeather)}
+          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-xl group ${showWeather ? 'bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'bg-[var(--card-bg)] text-[var(--foreground-muted)] hover:text-blue-500 hover:bg-[var(--secondary)]'}`}
+          title="Radar de Chuva"
+        >
+          <CloudSun className="w-5 h-5" />
+          <span className={`absolute left-14 bg-black/80 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none uppercase tracking-widest whitespace-nowrap`}>Radar: {showWeather ? 'ON' : 'OFF'}</span>
+        </button>
+
+        <button 
+          onClick={() => setShowSatellite(!showSatellite)}
+          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-xl group ${showSatellite ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)]' : 'bg-[var(--card-bg)] text-[var(--foreground-muted)] hover:text-indigo-500 hover:bg-[var(--secondary)]'}`}
+          title="Satélite de Nuvens (NASA)"
+        >
+          <CloudFog className="w-5 h-5" />
+          <span className={`absolute left-14 bg-black/80 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none uppercase tracking-widest whitespace-nowrap`}>Nuvens: {showSatellite ? 'ON' : 'OFF'}</span>
         </button>
 
         <button 
