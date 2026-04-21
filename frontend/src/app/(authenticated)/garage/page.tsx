@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Wrench,
   Fuel,
@@ -19,6 +19,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { toast } from "sonner";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type ReservaType = "CARRO" | "PNEU";
@@ -27,12 +28,13 @@ type GarageView = "TANQUES" | "RESERVAS";
 
 interface Reserva {
   id: number;
-  cod: string;
+  codigo: string; // Sincronizado com backend
   tipo: ReservaType;
   status: ReservaStatus;
   descricao: string;
-  atualizadoEm: string;
-  atualizadoPor: string;
+  atualizadoEm?: string;
+  atualizadoPor?: string;
+  isExternal?: boolean; // Identifica se veio do Pos. Frota
 }
 
 interface Tanque {
@@ -44,67 +46,6 @@ interface Tanque {
   atualizadoEm: string;
   atualizadoPor: string;
 }
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const initialReservas: Reserva[] = [
-  {
-    id: 1,
-    cod: "1042",
-    tipo: "CARRO",
-    status: "EM_MANUTENCAO",
-    descricao: "Troca de pastilha de freio dianteiro",
-    atualizadoEm: "16/04/2026 07:32",
-    atualizadoPor: "GUSTAVO MELLO",
-  },
-  {
-    id: 2,
-    cod: "1018",
-    tipo: "CARRO",
-    status: "AGUARDANDO",
-    descricao: "Verificação de motor - relato de fumaça",
-    atualizadoEm: "16/04/2026 06:45",
-    atualizadoPor: "GUSTAVO MELLO",
-  },
-  {
-    id: 3,
-    cod: "P-445",
-    tipo: "PNEU",
-    status: "LIBERADO",
-    descricao: "Pneu dianteiro esquerdo reposto",
-    atualizadoEm: "15/04/2026 22:10",
-    atualizadoPor: "AUXILIAR PINTO",
-  },
-  {
-    id: 4,
-    cod: "P-112",
-    tipo: "PNEU",
-    status: "AGUARDANDO",
-    descricao: "Pneu traseiro com desgaste irregular",
-    atualizadoEm: "16/04/2026 08:00",
-    atualizadoPor: "GUSTAVO MELLO",
-  },
-];
-
-const initialTanques: Tanque[] = [
-  {
-    id: 1,
-    nome: "Tanque Diesel 01",
-    capacidadeL: 15000,
-    medicaoCm: 110,
-    volumeL: 200,
-    atualizadoEm: "16/04/2026 06:00",
-    atualizadoPor: "GUSTAVO MELLO",
-  },
-  {
-    id: 2,
-    nome: "Tanque Diesel 02",
-    capacidadeL: 15000,
-    medicaoCm: 90,
-    volumeL: 8500,
-    atualizadoEm: "16/04/2026 06:00",
-    atualizadoPor: "GUSTAVO MELLO",
-  },
-];
 
 // ─── Helper Maps ──────────────────────────────────────────────────────────────
 const statusConfig: Record<
@@ -129,18 +70,21 @@ const statusConfig: Record<
 };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-function TankBar({ tanque }: { tanque: Tanque }) {
+function TankBar({ tanque, onClick }: { tanque: Tanque; onClick: () => void }) {
   const pct = Math.round((tanque.volumeL / tanque.capacidadeL) * 100);
   const color =
     pct > 50 ? "bg-emerald-500" : pct > 30 ? "bg-amber-500" : "bg-red-500";
 
   return (
-    <div className="glass p-6 rounded-2xl space-y-4">
+    <div
+      onClick={onClick}
+      className="glass p-6 rounded-2xl space-y-4 cursor-pointer hover:border-blue-500/50 transition-all group active:scale-[0.98]"
+    >
       <div className="flex items-start justify-between">
         <div>
           <h3 className="font-bold text-sm tracking-tight">{tanque.nome}</h3>
           <p className="text-muted text-[10px] uppercase font-bold tracking-widest mt-0.5">
-            Capacidade: {tanque.capacidadeL.toLocaleString("pt-BR")} L
+            Capacidade: {(tanque.capacidadeL ?? 0).toLocaleString("pt-BR")} L
           </p>
         </div>
         <div className="bg-[var(--secondary)] p-2 rounded-xl">
@@ -154,7 +98,7 @@ function TankBar({ tanque }: { tanque: Tanque }) {
             className="text-3xl font-black italic"
             style={{ fontFamily: "var(--font-outfit)" }}
           >
-            {tanque.volumeL.toLocaleString("pt-BR")}
+            {(tanque.volumeL ?? 0).toLocaleString("pt-BR")}
             <span className="text-xs font-medium text-muted ml-1 not-italic">
               L
             </span>
@@ -175,8 +119,8 @@ function TankBar({ tanque }: { tanque: Tanque }) {
 
       <div className="flex items-center gap-1.5 text-muted text-[10px] font-bold uppercase tracking-tighter">
         <Clock className="w-3 h-3" />
-        {tanque.medicaoCm}cm • {tanque.atualizadoEm} •{" "}
-        {tanque.atualizadoPor.split(" ")[0]}
+        {tanque.medicaoCm ?? 0}cm • {tanque.atualizadoEm} •{" "}
+        {(tanque.atualizadoPor ?? "SISTEMA").split(" ")[0]}
       </div>
     </div>
   );
@@ -187,14 +131,25 @@ function FuelUpdateModal({
   open,
   onClose,
   onSave,
+  targetTank,
+  tanques,
 }: {
   open: boolean;
   onClose: () => void;
   onSave: (t1: number, t2: number, isCm: boolean) => void;
+  targetTank?: Tanque | null;
+  tanques: Tanque[];
 }) {
   const [val1, setVal1] = useState("");
   const [val2, setVal2] = useState("");
   const [mode, setMode] = useState<"CM" | "L">("CM");
+
+  useEffect(() => {
+    if (open) {
+      setVal1("");
+      setVal2("");
+    }
+  }, [open]);
 
   if (!open) return null;
 
@@ -237,30 +192,28 @@ function FuelUpdateModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-muted uppercase tracking-widest">
-              Tanque 01 {mode === "CM" ? "(cm)" : "(L)"}
-            </label>
-            <input
-              type="number"
-              value={val1}
-              onChange={(e) => setVal1(e.target.value)}
-              placeholder="0"
-              className={inputClass}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-muted uppercase tracking-widest">
-              Tanque 02 {mode === "CM" ? "(cm)" : "(L)"}
-            </label>
-            <input
-              type="number"
-              value={val2}
-              onChange={(e) => setVal2(e.target.value)}
-              placeholder="0"
-              className={inputClass}
-            />
-          </div>
+          {tanques.map((t, idx) => {
+            const isTarget = !targetTank || t.id === targetTank.id;
+            if (!isTarget) return null;
+
+            return (
+              <div key={t.id} className="space-y-1.5">
+                <label className="text-xs font-bold text-muted uppercase tracking-widest">
+                  {t.nome} {mode === "CM" ? "(cm)" : "(L)"}
+                </label>
+                <input
+                  type="number"
+                  value={idx === 0 ? val1 : val2}
+                  onChange={(e) =>
+                    idx === 0 ? setVal1(e.target.value) : setVal2(e.target.value)
+                  }
+                  placeholder="0"
+                  className={inputClass}
+                  autoFocus={targetTank?.id === t.id}
+                />
+              </div>
+            );
+          })}
           <div className="pt-4 flex gap-3">
             <button
               type="button"
@@ -394,7 +347,7 @@ function FlowAnalysisModal({
 }
 
 function ReservaModal({ open, initial, onClose, onSave }: any) {
-  const [cod, setCod] = useState(initial?.cod ?? "");
+  const [cod, setCod] = useState(initial?.codigo ?? "");
   const [tipo, setTipo] = useState(initial?.tipo ?? "CARRO");
   const [status, setStatus] = useState(initial?.status ?? "AGUARDANDO");
   const [descricao, setDescricao] = useState(initial?.descricao ?? "");
@@ -478,56 +431,142 @@ function ReservaModal({ open, initial, onClose, onSave }: any) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function GaragePage() {
   const [view, setView] = useState<GarageView>("TANQUES");
-  const [tanques, setTanques] = useState<Tanque[]>(initialTanques);
-  const [reservas, setReservas] = useState<Reserva[]>(initialReservas);
+  const [tanques, setTanques] = useState<Tanque[]>([]);
+  const [reservas, setReservas] = useState<Reserva[]>([]);
   const [fuelModalOpen, setFuelModalOpen] = useState(false);
+  const [targetTank, setTargetTank] = useState<Tanque | null>(null);
   const [resModalOpen, setResModalOpen] = useState(false);
   const [flowModalOpen, setFlowModalOpen] = useState(false);
   const [editingRes, setEditingRes] = useState<Reserva | undefined>();
 
-  const totalVolume = tanques.reduce((acc, t) => acc + t.volumeL, 0);
-  const totalCap = tanques.reduce((acc, t) => acc + t.capacidadeL, 0);
-  const totalPct = Math.round((totalVolume / totalCap) * 100);
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem("sisget_token");
+      const headers = { Authorization: `Bearer ${token}` };
 
-  const handleFuelSave = (v1: number, v2: number, isCm: boolean) => {
-    // Basic conversion logic (Mock: 1cm = 95L for this tank)
-    const factor = 95;
-    setTanques((prev) => [
-      {
-        ...prev[0],
-        medicaoCm: isCm ? v1 : Math.round(v1 / factor),
-        volumeL: isCm ? v1 * factor : v1,
-        atualizadoEm: new Date().toLocaleString("pt-BR"),
-      },
-      {
-        ...prev[1],
-        medicaoCm: isCm ? v2 : Math.round(v2 / factor),
-        volumeL: isCm ? v2 * factor : v2,
-        atualizadoEm: new Date().toLocaleString("pt-BR"),
-      },
-    ]);
+      const [tRes, rRes, fRes] = await Promise.all([
+        fetch("/api/garage/tanques", { headers }),
+        fetch("/api/garage/reservas", { headers }),
+        fetch("/api/fleet/static-pos/base/IMP", { headers }),
+      ]);
+
+      if (tRes.ok && rRes.ok && fRes.ok) {
+        const tData = await tRes.json();
+        const rData = await rRes.json();
+        const fData = await fRes.json();
+
+        setTanques(tData);
+
+        // Inteligência Bilateral: Mesclar Reservas Locais com Posicionamento de Frota
+        const externalReservas = fData
+          .filter((f: any) => f.category === "RESERVA")
+          .map((f: any) => ({
+            id: f.id + 1000000, // Offset para não conflitar IDs
+            codigo: f.vehicleId,
+            tipo: "CARRO",
+            status: "AGUARDANDO",
+            descricao: f.notes || "Sincronizado via Pos. Frota",
+            isExternal: true,
+          }));
+
+        // Remover duplicatas (prioriza externa se já estiver lá?)
+        // Na verdade, aqui mesclamos e removemos carros que já estão na reserva local
+        const localCodigos = new Set(rData.map((r: any) => r.codigo));
+        const finalReservas = [
+          ...rData,
+          ...externalReservas.filter(
+            (ext: any) => !localCodigos.has(ext.codigo),
+          ),
+        ];
+
+        setReservas(finalReservas);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar dados da garagem:", err);
+    }
   };
 
-  const handleResSave = (data: any) => {
-    const now = new Date().toLocaleString("pt-BR");
-    if (editingRes) {
-      setReservas((prev) =>
-        prev.map((r) =>
-          r.id === editingRes.id ? { ...r, ...data, atualizadoEm: now } : r,
-        ),
-      );
-    } else {
-      setReservas((prev) => [
-        {
-          id: Date.now(),
-          ...data,
-          atualizadoEm: now,
-          atualizadoPor: "GUSTAVO MELLO",
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const totalVolume = tanques.reduce((acc, t) => acc + (t.volumeL ?? 0), 0);
+  const totalCap = tanques.reduce((acc, t) => acc + (t.capacidadeL ?? 0), 0);
+  const totalPct = Math.round((totalVolume / totalCap) * 100);
+
+  const handleFuelSave = async (v1: number, v2: number, isCm: boolean) => {
+    const factor = 95;
+    const token = localStorage.getItem("sisget_token");
+    try {
+      const updateTank = async (t: Tanque, val: number) => {
+        const volume = isCm ? val * factor : val;
+        const cm = isCm ? val : Math.round(val / factor);
+        await fetch(`/api/garage/tanques/${t.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            ...t,
+            medicaoCm: cm,
+            volumeL: volume,
+            atualizadoPor: "AUXILIAR",
+          }),
+        });
+      };
+
+      if (!targetTank || targetTank.id === tanques[0]?.id) await updateTank(tanques[0], v1);
+      if (!targetTank || targetTank.id === tanques[1]?.id) await updateTank(tanques[1], v2);
+
+      toast.success("Medição atualizada com sucesso!");
+      fetchData();
+    } catch (err) {
+      toast.error("Erro ao atualizar medição");
+    }
+  };
+
+  const handleResSave = async (data: any) => {
+    try {
+      const token = localStorage.getItem("sisget_token");
+      const { cod, ...rest } = data;
+      const res = await fetch("/api/garage/reservas", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        ...prev,
-      ]);
+        body: JSON.stringify({ ...editingRes, ...rest, codigo: cod }),
+      });
+
+      if (res.ok) {
+        toast.success("Reserva salva e sincronizada com a frota!");
+        fetchData();
+      }
+    } catch (err) {
+      toast.error("Erro ao salvar reserva");
     }
     setEditingRes(undefined);
+  };
+
+  const handleResDelete = async (id: number) => {
+    if (id >= 1000000) {
+      toast.error(
+        "Itens sincronizados devem ser movidos no Posicionamento de Frota",
+      );
+      return;
+    }
+    try {
+      const token = localStorage.getItem("sisget_token");
+      await fetch(`/api/garage/reservas/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Reserva removida");
+      fetchData();
+    } catch (err) {
+      toast.error("Erro ao remover");
+    }
   };
 
   return (
@@ -575,11 +614,15 @@ export default function GaragePage() {
               <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                 {tanques.map((t) => (
                   <div key={t.id} className="relative group">
-                    <TankBar tanque={t} />
+                    <TankBar
+                      tanque={t}
+                      onClick={() => {
+                        setTargetTank(t);
+                        setFuelModalOpen(true);
+                      }}
+                    />
                   </div>
                 ))}
-
-                {/* Removido o card duplicado de análise para limpar a interface */}
               </div>
 
               {/* Sidebar: Resumo e Ações */}
@@ -634,22 +677,16 @@ export default function GaragePage() {
                     </div>
 
                     <button
-                      onClick={() => setFuelModalOpen(true)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // BUG FIX: Evitar abertura do FlowAnalysisModal
+                        setTargetTank(null);
+                        setFuelModalOpen(true);
+                      }}
                       className="w-full py-4 mt-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
                     >
                       <ArrowRightLeft className="w-4 h-4" /> ATUALIZAR MEDIÇÃO
                     </button>
                   </div>
-                </div>
-
-                <div className="glass p-6 rounded-3xl bg-[var(--secondary)]/50 border-dashed border-2 border-[var(--border)]">
-                  <p className="text-[10px] font-bold text-muted uppercase tracking-widest mb-3">
-                    Observações de Garagem
-                  </p>
-                  <p className="text-[11px] text-muted italic">
-                    "Última descarga de carreta efetuada em 14/04. Próxima
-                    medição obrigatória: Amanhã às 06h."
-                  </p>
                 </div>
               </div>
             </div>
@@ -706,7 +743,14 @@ export default function GaragePage() {
                         className="px-6 py-5 font-black italic tracking-tighter"
                         style={{ fontFamily: "var(--font-outfit)" }}
                       >
-                        {r.cod}
+                        <div className="flex items-center gap-2">
+                          {r.codigo}
+                          {r.isExternal && (
+                            <span className="text-[8px] px-1.5 py-0.5 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded uppercase font-black">
+                              via Pos. Frota
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-5">
                         <span className="text-[10px] font-black px-2 py-1 bg-[var(--secondary)] rounded border-[var(--border)] uppercase">
@@ -715,12 +759,15 @@ export default function GaragePage() {
                       </td>
                       <td className="px-6 py-5">
                         <span
-                          className={`flex items-center gap-2 text-xs font-bold ${statusConfig[r.status].color}`}
+                          className={`flex items-center gap-2 text-xs font-bold ${(statusConfig[r.status] || statusConfig.AGUARDANDO).color}`}
                         >
                           <div
-                            className={`w-2 h-2 rounded-full ${statusConfig[r.status].color.replace("text", "bg")}`}
+                            className={`w-2 h-2 rounded-full ${(statusConfig[r.status] || statusConfig.AGUARDANDO).color.replace("text", "bg")}`}
                           />{" "}
-                          {statusConfig[r.status].label}
+                          {
+                            (statusConfig[r.status] || statusConfig.AGUARDANDO)
+                              .label
+                          }
                         </span>
                       </td>
                       <td className="px-6 py-5 text-muted text-xs font-medium">
@@ -738,11 +785,7 @@ export default function GaragePage() {
                             <Pencil className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() =>
-                              setReservas((prev) =>
-                                prev.filter((x) => x.id !== r.id),
-                              )
-                            }
+                            onClick={() => handleResDelete(r.id)}
                             className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -762,6 +805,8 @@ export default function GaragePage() {
         open={fuelModalOpen}
         onClose={() => setFuelModalOpen(false)}
         onSave={handleFuelSave}
+        targetTank={targetTank}
+        tanques={tanques}
       />
       <ReservaModal
         open={resModalOpen}

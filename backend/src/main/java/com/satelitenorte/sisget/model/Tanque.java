@@ -2,6 +2,7 @@ package com.satelitenorte.sisget.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tanques")
@@ -19,9 +20,18 @@ public class Tanque {
     @Column(nullable = false)
     private String nome;
 
-    @Column(name = "capacidade_max")
-    private Double capacidadeMax;
+    @Column(name = "capacidade_l")
+    private Double capacidadeL;
 
-    @Column(name = "nivel_atual_cm")
-    private Double nivelAtualCm;
+    @Column(name = "medicao_cm")
+    private Double medicaoCm;
+
+    @Column(name = "volume_l")
+    private Double volumeL;
+
+    @Column(name = "atualizado_em")
+    private LocalDateTime atualizadoEm;
+
+    @Column(name = "atualizado_por")
+    private String atualizadoPor;
 }

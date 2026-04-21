@@ -2,6 +2,7 @@ package com.satelitenorte.sisget.controller;
 
 import com.satelitenorte.sisget.model.FleetPositioningStatic;
 import com.satelitenorte.sisget.repository.FleetPositioningStaticRepository;
+import com.satelitenorte.sisget.service.GarageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import java.util.List;
 public class FleetPositioningStaticController {
 
     private final FleetPositioningStaticRepository repository;
+    private final GarageService garageService;
 
     @GetMapping
     public List<FleetPositioningStatic> listAll() {
@@ -32,7 +34,7 @@ public class FleetPositioningStaticController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        repository.deleteById(id);
+        garageService.deleteFleetPosition(id);
         return ResponseEntity.ok().build();
     }
 }
