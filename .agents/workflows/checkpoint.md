@@ -24,13 +24,12 @@ Quando o usuário digitar `/checkpoint`, orquestre o pipeline de validação e p
    - Valide a sintaxe do Bot de Rastreamento Python.
    - Se algum build falhar, **interrompa o workflow** e reporte o erro detalhado ao usuário para correção.
 
-4. Assuma o papel do **DevOps Master (@devops)** e execute a skill `deploy_local.md` com escopo restrito ao commit:
+4. Assuma o papel do **Mentor Técnico (@mentor)** e execute a skill `obsidian_sync.md`:
+   - Atualize o log de progresso no MOC principal (`000-PRD-SISGET.md`).
+   - Se novas funcionalidades foram comitadas, gere notas de revisão técnica em `docs/Rewinds/`.
+
+5. Assuma o papel do **DevOps Master (@devops)** e execute a skill `deploy_local.md` com escopo restrito ao commit:
    - Consolide o staging com `git add -p` (revisão interativa) ou `git add .` conforme o contexto.
    - Realize o commit com mensagem semântica e descritiva seguindo o padrão Conventional Commits **sempre em Português** (ex: `feat(rastreamento): adiciona sincronização de frota em tempo real`).
    - Execute `git push` para o branch atual.
-   - Reporte o hash do commit gerado.
-
-5. Assuma o papel do **Mentor Técnico (@mentor)** e execute a skill `obsidian_sync.md`:
-   - Atualize o log de progresso no MOC principal (`000-PRD-SISGET.md`).
-   - Se novas funcionalidades foram comitadas, gere notas de revisão técnica em `docs/Rewinds/`.
-   - **Reporte ao usuário** quais documentos foram atualizados e o estado final do projeto.
+   - Reporte o hash do commit gerado e o estado final do projeto.

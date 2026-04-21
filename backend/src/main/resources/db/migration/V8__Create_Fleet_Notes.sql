@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS fleet_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    text TEXT NOT NULL,
+    created_at DATETIME NOT NULL
+);

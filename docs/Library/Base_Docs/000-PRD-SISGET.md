@@ -231,6 +231,7 @@ Base de dados inicial com 604 motoristas e 170 veículos (extraídos da aba ocul
 
 ### ✅ In (Beta 1 — até 15/05/2026)
 - [x] **TASK-004: Autenticação JWT** (Identity) - ✅ Concluído
+- [x] **TASK-005: Estabilização de Frota e Persistência de Notas** (UI/UX + Backend) - ✅ Concluído (21/04)
 - Dashboard com módulos
 - Controle de Garagem (Reservas/Oficina + Combustível)
 - Posicionamento de Frota (3 bases)
